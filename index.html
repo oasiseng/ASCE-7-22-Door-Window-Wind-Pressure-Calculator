@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASCE 7-22 Door/Window Wind Pressure Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+    }
+    h1, h2 {
+      color: #2c3e50;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .instructions, .input-form, .results, .disclaimer {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .instructions {
+      background-color: #e8f4fd;
+      border-color: #b3d9ff;
+    }
+    .input-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      position: relative;
+    }
+    .help-icon { cursor: help; color: #007BFF; font-size: 0.9em; margin-left: 5px; }
+    .input-form input, .input-form select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .results {
+      display: none;
+    }
+    .results table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .results th, .results td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    .results th {
+      background: #f2f2f2;
+    }
+    .disclaimer {
+      font-size: 0.9em;
+      color: #555;
+      text-align: center;
+      border: none;
+      background-color: #ffe6e6;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .error {
+      color: red;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+    .warning {
+      color: #c0392b;
+      margin-top: 10px;
+    }
+    /* Mobile responsiveness */
+    @media (max-width: 600px) {
+      .container {
+        padding: 10px;
+      }
+      .input-form input, .input-form select {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ASCE 7-22 Door/Window Wind Pressure Calculator</h1>
+
+    <!-- Instructions -->
+    <div class="instructions">
+      <h2>How to Use This Calculator</h2>
+      <p>This tool estimates wind pressures on doors and windows (components and cladding) for low-rise enclosed buildings based on ASCE 7-22. Follow these steps:</p>
+      <ol>
+        <li><strong>Wind Speed</strong>: Enter the ultimate wind speed (V) in mph from ASCE 7-22 maps for your risk category and location.</li>
+        <li><strong>Building Dimensions</strong>: Input the length, width, and mean roof height (h) in feet (assumes low-rise, h ≤ 60 ft).</li>
+        <li><strong>Exposure Category</strong>: Choose B (urban/suburban), C (open terrain), or D (coastal/flat) based on surrounding terrain.</li>
+        <li><strong>Topographic Factor (Kzt)</strong>: Enter Kzt (default 1.0 for flat sites; use ASCE Fig. 26.8-1 if hill/ridge/escarpment).</li>
+        <li><strong>Effective Wind Area</strong>: Enter the area (A) of the door or window in sq ft (affects GCp for negative pressures).</li>
+        <li>Click "Calculate" to see results, including pressures and loads for Zones 4 (interior) and 5 (corners).</li>
+      </ol>
+      <p><strong>Understanding Zones</strong>: Zone 5 is the end zone within 'a' feet from corners/edges (calculated per ASCE 30.3). Zone 4 is the interior wall area. Assumes enclosed building (GCpi = ±0.18).</p>
+      <p><strong>Note</strong>: For h > 60 ft or non-low-rise, use full ASCE methods. Positive pressures are inward; negative are outward (suction).</p>
+    </div>
+
+    <!-- Input Form -->
+    <div class="input-form">
+      <label for="windSpeed">Ultimate Wind Speed, V (mph): <span class="help-icon" title="From ASCE 7-22 risk category maps (e.g., Fig. 26.5-1A for Risk II).">?</span></label>
+      <input type="number" id="windSpeed" min="0" step="1" aria-required="true">
+
+      <label for="length">Building Length (ft): <span class="help-icon" title="Longer horizontal dimension.">?</span></label>
+      <input type="number" id="length" min="0" step="1" aria-required="true">
+
+      <label for="width">Building Width (ft): <span class="help-icon" title="Shorter horizontal dimension.">?</span></label>
+      <input type="number" id="width" min="0" step="1" aria-required="true">
+
+      <label for="height">Mean Roof Height, h (ft): <span class="help-icon" title="For low-rise buildings (h ≤ 60 ft); used for qh and Kz.">?</span></label>
+      <input type="number" id="height" min="0" step="1" aria-required="true">
+
+      <label for="exposure">Exposure Category: <span class="help-icon" title="B: Urban/suburban; C: Open/flat; D: Coastal/water.">?</span></label>
+      <select id="exposure" aria-required="true">
+        <option value="B">B</option>
+        <option value="C" selected>C</option>
+        <option value="D">D</option>
+      </select>
+
+      <label for="kzt">Topographic Factor, Kzt: <span class="help-icon" title="1.0 for flat sites; >1.0 for hills/escarpments (ASCE Fig. 26.8-1).">?</span></label>
+      <input type="number" id="kzt" min="1" step="0.01" value="1.0">
+
+      <label for="area">Effective Wind Area, A (sq ft): <span class="help-icon" title="Tributary area for the component; affects GCp negative values.">?</span></label>
+      <input type="number" id="area" min="0" step="1" aria-required="true">
+
+      <button id="calculateBtn">Calculate</button>
+      <button id="resetBtn">Reset</button>
+      <p id="errorMessage" class="error" style="display:none;"></p>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="results">
+      <h2>Results</h2>
+      <p><strong>Zone End Width 'a':</strong> <span id="aValue"></span> ft</p>
+      <p><strong>Velocity Pressure (qh):</strong> <span id="qzValue"></span> psf</p>
+      <p><strong>Exposure Coefficient (Kz):</strong> <span id="kzValue"></span></p>
+      <table>
+        <tr><th>Parameter</th><th>Zone 4 (Interior)</th><th>Zone 5 (Corners)</th></tr>
+        <tr><td>Positive Pressure (psf, inward)</td><td id="zone4Positive"></td><td id="zone5Positive"></td></tr>
+        <tr><td>Negative Pressure (psf, outward)</td><td id="zone4Negative"></td><td id="zone5Negative"></td></tr>
+        <tr><td>Positive Load (lbf)</td><td id="zone4ForcePositive"></td><td id="zone5ForcePositive"></td></tr>
+        <tr><td>Negative Load (lbf)</td><td id="zone4ForceNegative"></td><td id="zone5ForceNegative"></td></tr>
+      </table>
+      <div id="heightWarning" class="warning" style="display:none;">Warning: Building height >60 ft; this calculator assumes low-rise conditions. Consult ASCE 7-22 for mid/high-rise methods.</div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <p><em>Disclaimer: This tool provides estimates based on ASCE 7-22 for enclosed low-rise buildings. Assumes Ke=1.0 (sea level), no directionality adjustment (baked into V maps). For precise designs, complex topography, or non-enclosed structures, consult a licensed professional engineer. Oasis Engineering assumes no liability for use of this tool.</em></p>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Compute Kz exactly per ASCE 7-22 (similar to 7-16)
+    function computeKz(exposure, height) {
+      let alpha, zg;
+      if (exposure === 'B') {
+        alpha = 9.5;
+        zg = 1200;
+        const zmin = 15;
+        const z = Math.max(height, zmin);
+        return 2.01 * Math.pow(z / zg, 2 / alpha);
+      } else if (exposure === 'C') {
+        alpha = 7.0;
+        zg = 900;
+        return 2.01 * Math.pow(height / zg, 2 / alpha);
+      } else if (exposure === 'D') {
+        alpha = 5.0;
+        zg = 700;
+        return 2.01 * Math.pow(height / zg, 2 / alpha);
+      }
+      return 0;
+    }
+
+    // Compute GCp negative for zone based on area (interpolated from ASCE Fig 30.3-1)
+    function computeGCpNeg(zone, area) {
+      if (area <= 10) return (zone === 4) ? -1.0 : -1.8;
+      if (area >= 500) return (zone === 4) ? -0.8 : -1.1;
+
+      // Piecewise linear in log scale
+      const logA = Math.log10(area);
+      if (area <= 50) {
+        // 10 to 50: Zone4 from -1.0 to -0.9; Zone5 -1.8 to -1.3
+        const log10 = Math.log10(10), log50 = Math.log10(50);
+        const gc10 = (zone === 4) ? -1.0 : -1.8;
+        const gc50 = (zone === 4) ? -0.9 : -1.3;
+        return gc10 + (gc50 - gc10) * (logA - log10) / (log50 - log10);
+      } else {
+        // 50 to 500: Zone4 -0.9 to -0.8; Zone5 -1.3 to -1.1
+        const log50 = Math.log10(50), log500 = Math.log10(500);
+        const gc50 = (zone === 4) ? -0.9 : -1.3;
+        const gc500 = (zone === 4) ? -0.8 : -1.1;
+        return gc50 + (gc500 - gc50) * (logA - log50) / (log500 - log50);
+      }
+    }
+
+    function calculatePressures() {
+      const windSpeed = parseFloat(document.getElementById('windSpeed').value);
+      const length = parseFloat(document.getElementById('length').value);
+      const width = parseFloat(document.getElementById('width').value);
+      const height = parseFloat(document.getElementById('height').value);
+      const exposure = document.getElementById('exposure').value;
+      const kzt = parseFloat(document.getElementById('kzt').value);
+      const area = parseFloat(document.getElementById('area').value);
+      const errorMessage = document.getElementById('errorMessage');
+
+      // Validate inputs
+      if (isNaN(windSpeed) || isNaN(length) || isNaN(width) || isNaN(height) || isNaN(kzt) || isNaN(area) ||
+          windSpeed <= 0 || length <= 0 || width <= 0 || height <= 0 || kzt < 1 || area <= 0) {
+        errorMessage.textContent = 'Please enter positive values for all fields (Kzt ≥ 1.0).';
+        errorMessage.style.display = 'block';
+        return;
+      }
+      errorMessage.style.display = 'none';
+
+      try {
+        // Step 1: Calculate zone end width 'a' (ASCE 30.3)
+        const leastDim = Math.min(length, width);
+        let a = Math.min(0.1 * leastDim, 0.4 * height);
+        a = Math.max(a, 0.04 * leastDim, 3);  // Not less than 4% least dim or 3 ft
+
+        // Step 2: Compute Kz at mean roof height h
+        const kz = computeKz(exposure, height);
+
+        // Step 3: Calculate velocity pressure qh (at h, ASCE 7-22: no Kd, Ke=1 assumed)
+        const qh = 0.00256 * kz * kzt * Math.pow(windSpeed, 2);  // psf
+
+        // Step 4: GCpi for enclosed building
+        const gcpi = 0.18;
+
+        // Step 5: GCp external (positive same for both zones; negative depends on zone and area)
+        const gcpPos = 1.0;  // Positive external for walls
+        const gcpNegZone4 = computeGCpNeg(4, area);
+        const gcpNegZone5 = computeGCpNeg(5, area);
+
+        // Step 6: Net pressures (psf)
+        // Positive (inward): qh * (GCp_pos + GCpi)  [worst case: +ext + +int]
+        // Negative (outward): qh * (GCp_neg - GCpi)  [worst case: -ext - +int, since GCp_neg <0]
+        const pPos = qh * (gcpPos + gcpi);  // Same for both zones
+        const pNegZone4 = qh * (gcpNegZone4 - gcpi);
+        const pNegZone5 = qh * (gcpNegZone5 - gcpi);
+
+        // Step 7: Wind loads (lbf) = pressure * area
+        const forcePos = pPos * area;
+        const forceNegZone4 = pNegZone4 * area;
+        const forceNegZone5 = pNegZone5 * area;
+
+        // Display results
+        document.getElementById('aValue').textContent = a.toFixed(1);
+        document.getElementById('qzValue').textContent = qh.toFixed(1);
+        document.getElementById('kzValue').textContent = kz.toFixed(2);
+        document.getElementById('zone4Positive').textContent = pPos.toFixed(1);
+        document.getElementById('zone5Positive').textContent = pPos.toFixed(1);  // Same
+        document.getElementById('zone4Negative').textContent = pNegZone4.toFixed(1);
+        document.getElementById('zone5Negative').textContent = pNegZone5.toFixed(1);
+        document.getElementById('zone4ForcePositive').textContent = forcePos.toFixed(1);
+        document.getElementById('zone5ForcePositive').textContent = forcePos.toFixed(1);
+        document.getElementById('zone4ForceNegative').textContent = forceNegZone4.toFixed(1);
+        document.getElementById('zone5ForceNegative').textContent = forceNegZone5.toFixed(1);
+
+        // Show results and warnings
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('heightWarning').style.display = (height > 60) ? 'block' : 'none';
+      } catch (error) {
+        errorMessage.textContent = 'An error occurred during calculation. Please check your inputs.';
+        errorMessage.style.display = 'block';
+        console.error('Calculation error:', error);
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('windSpeed').value = '';
+      document.getElementById('length').value = '';
+      document.getElementById('width').value = '';
+      document.getElementById('height').value = '';
+      document.getElementById('exposure').value = 'C';
+      document.getElementById('kzt').value = '1.0';
+      document.getElementById('area').value = '';
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('heightWarning').style.display = 'none';
+    }
+
+    // Attach event listeners
+    document.getElementById('calculateBtn').addEventListener('click', calculatePressures);
+    document.getElementById('resetBtn').addEventListener('click', resetForm);
+  </script>
+</body>
+</html>
