@@ -98,3 +98,5 @@ This tool provides estimates only and is not a substitute for professional engin
 - Inspired by engineering tools for quick wind load estimates.
 
 If you find this useful, star the repo! ⭐
+
+Learn More at WindCalculations.com: WindCalculations.com provides site-specific wind load calculations, certifications, and engineering letters essential for permitting and installing building components like windows, doors, rooftop solar equipment, and roofing materials. It ensures full compliance with the latest Building Codes and ASCE 7-22 standards.
