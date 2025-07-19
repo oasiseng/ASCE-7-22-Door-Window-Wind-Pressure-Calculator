@@ -31,6 +31,7 @@ A simple, web-based tool to estimate wind pressures and loads on doors and windo
 ## Demo
 
 You can try the calculator live [here]([https://oasisengineering.com/asce-7-22-door-window-wind-pressure-calculator/](https://oasisengineering.com/free-wind-load-calculator/)).
+https://oasisengineering.com/free-wind-load-calculator/ 
 
 ## Installation
 
