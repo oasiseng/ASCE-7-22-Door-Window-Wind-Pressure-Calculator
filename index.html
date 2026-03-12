@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ASCE 7-22 Door/Window Wind Pressure Calculator | Oasis Engineering</title>
-  <meta name="description" content="Professional ASCE 7-22 Wind Pressure Calculator for Components and Cladding (C&C). Calculate Zone 4 and Zone 5 wind loads for doors and windows.">
   
   <script type="application/ld+json">
   {
@@ -36,6 +35,7 @@
       --accent-green-hover: #13463a;
       --border-color: #e2dfd8;
       --error-color: #d93025;
+      --info-bg: #eaf1ef;
       --radius: 12px;
       --shadow: 0 4px 20px rgba(26, 23, 20, 0.05);
       --font-body: 'Plus Jakarta Sans', sans-serif;
@@ -43,9 +43,9 @@
     }
 
     /* CSS Reset */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .app-container, .app-container * { box-sizing: border-box; }
     
-    body {
+    .oasis-calculator-wrapper {
       font-family: var(--font-body);
       background-color: var(--bg-color);
       color: var(--text-main);
@@ -72,6 +72,7 @@
       font-size: 1.75rem;
       font-weight: 700;
       color: var(--text-main);
+      margin: 0;
     }
 
     .badge-counter {
@@ -86,6 +87,26 @@
       align-items: center;
       gap: 0.5rem;
     }
+
+    /* Instructions Box */
+    .instructions-box {
+      background-color: var(--info-bg);
+      border: 1px solid var(--accent-green);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .instructions-box h2 {
+      color: var(--accent-green);
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.25rem;
+    }
+
+    .instructions-box p { margin-bottom: 0.5rem; font-size: 0.95rem; }
+    .instructions-box ol { margin-bottom: 1rem; padding-left: 1.5rem; font-size: 0.95rem; }
+    .instructions-box li { margin-bottom: 0.25rem; }
 
     /* Grid Layout */
     .grid-layout {
@@ -106,6 +127,7 @@
 
     .card h2 {
       font-size: 1.25rem;
+      margin-top: 0;
       margin-bottom: 1.5rem;
       padding-bottom: 0.5rem;
       border-bottom: 2px solid var(--bg-color);
@@ -114,6 +136,8 @@
     /* Forms & Inputs */
     .input-group {
       margin-bottom: 1.25rem;
+      display: flex;
+      flex-direction: column;
     }
 
     .input-group label {
@@ -124,25 +148,34 @@
       font-size: 0.95rem;
     }
 
-    .input-group input, 
-    .input-group select {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1.5px solid var(--border-color);
-      border-radius: 8px;
-      font-family: var(--font-mono);
-      font-size: 1rem;
-      color: var(--text-main);
-      background-color: #faf9f7;
-      transition: all 0.2s ease;
+    /* Aggressive Theme Override for Inputs */
+    .app-container .input-group input[type="number"],
+    .app-container .input-group input[type="text"],
+    .app-container .input-group select {
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      flex: 1 1 100% !important;
+      margin: 0 !important;
+      padding: 0.75rem 1rem !important;
+      border: 1.5px solid var(--border-color) !important;
+      border-radius: 8px !important;
+      font-family: var(--font-mono) !important;
+      font-size: 1rem !important;
+      color: var(--text-main) !important;
+      background-color: #faf9f7 !important;
+      transition: all 0.2s ease !important;
+      height: auto !important;
+      line-height: normal !important;
     }
 
-    .input-group input:focus, 
-    .input-group select:focus {
-      outline: none;
-      border-color: var(--accent-green);
-      background-color: var(--surface-color);
-      box-shadow: 0 0 0 4px rgba(26, 92, 76, 0.1);
+    .app-container .input-group input:focus, 
+    .app-container .input-group select:focus {
+      outline: none !important;
+      border-color: var(--accent-green) !important;
+      background-color: var(--surface-color) !important;
+      box-shadow: 0 0 0 4px rgba(26, 92, 76, 0.1) !important;
     }
 
     /* Tooltips */
@@ -194,7 +227,7 @@
     }
 
     /* Buttons */
-    .btn {
+    .app-container .btn {
       display: inline-flex;
       justify-content: center;
       align-items: center;
@@ -206,32 +239,33 @@
       cursor: pointer;
       transition: background 0.2s, transform 0.1s;
       font-family: var(--font-body);
+      text-decoration: none;
     }
 
-    .btn-primary {
+    .app-container .btn-primary {
       background: var(--accent-green);
       color: var(--surface-color);
       width: 100%;
       margin-bottom: 0.5rem;
     }
 
-    .btn-primary:hover { background: var(--accent-green-hover); }
-    .btn-primary:active { transform: scale(0.98); }
+    .app-container .btn-primary:hover { background: var(--accent-green-hover); }
+    .app-container .btn-primary:active { transform: scale(0.98); }
 
-    .btn-secondary {
+    .app-container .btn-secondary {
       background: var(--border-color);
       color: var(--text-main);
       width: 100%;
     }
-    .btn-secondary:hover { background: #d4d0c5; }
+    .app-container .btn-secondary:hover { background: #d4d0c5; }
 
-    .btn-action {
+    .app-container .btn-action {
       background: transparent;
       border: 1.5px solid var(--border-color);
       color: var(--text-main);
       flex: 1;
     }
-    .btn-action:hover {
+    .app-container .btn-action:hover {
       border-color: var(--accent-green);
       color: var(--accent-green);
     }
@@ -312,7 +346,7 @@
       padding: 2rem;
       text-align: center;
     }
-    .lead-gen-footer h3 { color: var(--accent-green); margin-bottom: 0.5rem; }
+    .lead-gen-footer h3 { color: var(--accent-green); margin-bottom: 0.5rem; margin-top:0; }
     .lead-gen-footer p { color: var(--text-muted); margin-bottom: 1.5rem; max-width: 600px; margin-inline: auto;}
     .lead-gen-footer .btn { max-width: 250px; }
 
@@ -324,134 +358,195 @@
       font-weight: 500;
     }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      .grid-layout { grid-template-columns: 1fr; }
-    }
+    /* --- PRINT ONLY STYLES --- */
+    .print-only-header, .print-only-summary { display: none; }
 
-    /* Print Styles */
     @media print {
-      body { background: white; padding: 0; }
-      .app-header, .inputs-panel, .action-bar, .lead-gen-footer, details.breakdown { display: none !important; }
+      body { background: white; padding: 0; margin: 0; }
+      .oasis-calculator-wrapper { padding: 0; background: white; }
+      
+      /* Hide all web UI elements */
+      .app-header, .instructions-box, .inputs-panel, .action-bar, .lead-gen-footer, details.breakdown { 
+        display: none !important; 
+      }
+      
+      /* Reconfigure layout for standard 8.5x11 */
       .grid-layout { display: block; }
-      .card { border: none; box-shadow: none; padding: 0; }
-      #resultsPanel { display: block; width: 100%; }
+      .card { border: none; box-shadow: none; padding: 0; margin: 0; }
+      #resultsPanel { display: block; width: 100%; page-break-inside: avoid; }
+      
+      /* Show Print Header & Parameters Summary */
+      .print-only-header {
+        display: block;
+        border-bottom: 3px solid var(--accent-green);
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+      }
+      .print-only-header h1 { color: var(--accent-green); margin: 0; font-size: 24px; }
+      .print-only-header p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px; }
+
+      .print-only-summary {
+        display: block;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        border-radius: 8px;
+        background: #faf9f7;
+      }
+      .print-only-summary h3 { margin-top: 0; margin-bottom: 1rem; font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        font-size: 14px;
+      }
+      .summary-item strong { display: block; color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+      
+      .result-box { border: 1px solid #ccc !important; background: white !important; }
     }
   </style>
 </head>
 <body>
 
-  <div class="app-container">
-    <header class="app-header">
-      <h1>Oasis Engineering ASCE 7-22 Wind Tool</h1>
-      <div class="badge-counter">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        <span id="usageCounter">Loading...</span>
+  <div class="oasis-calculator-wrapper">
+    <div class="app-container">
+      
+      <div class="print-only-header">
+        <h1>OASIS ENGINEERING</h1>
+        <p><strong>ASCE 7-22 Components & Cladding Wind Pressure Report</strong></p>
+        <p id="printDate"></p>
       </div>
-    </header>
 
-    <main class="grid-layout">
-      <section class="card inputs-panel">
-        <h2>Parameters</h2>
-        
-        <div class="input-group">
-          <label>Ultimate Wind Speed, V (mph) <span class="help-icon" data-tooltip="From ASCE 7-22 risk category maps">?</span></label>
-          <input type="number" id="windSpeed" placeholder="e.g. 150">
+      <header class="app-header">
+        <h1>Oasis Engineering ASCE 7-22 Wind Tool</h1>
+        <div class="badge-counter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span id="usageCounter">Loading...</span>
         </div>
+      </header>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="instructions-box">
+        <h2>How to Use This Calculator</h2>
+        <p>This tool estimates wind pressures on doors and windows (components and cladding) for low-rise enclosed buildings based on ASCE 7-22. Follow these steps:</p>
+        <ol>
+          <li><strong>Wind Speed</strong>: Enter the ultimate wind speed (V) in mph from ASCE 7-22 maps for your risk category and location.</li>
+          <li><strong>Building Dimensions</strong>: Input the length, width, and mean roof height (h) in feet (assumes low-rise, h ≤ 60 ft).</li>
+          <li><strong>Exposure Category</strong>: Choose B (urban/suburban), C (open terrain), or D (coastal/flat) based on surrounding terrain.</li>
+          <li><strong>Topographic Factor (Kzt)</strong>: Enter Kzt (default 1.0 for flat sites; use ASCE Fig. 26.8-1 if hill/ridge/escarpment).</li>
+          <li><strong>Effective Wind Area</strong>: Enter the area (A) of the door or window in sq ft (affects GCp for negative pressures).</li>
+          <li>Click "Calculate" to see results, including pressures and loads for Zones 4 (interior) and 5 (corners).</li>
+        </ol>
+        <p><strong>Understanding Zones:</strong> Zone 5 is the end zone within 'a' feet from corners/edges (calculated per ASCE 30.3). Zone 4 is the interior wall area. Assumes enclosed building (GCpi = ±0.18).</p>
+        <p><strong>Note:</strong> For h > 60 ft or non-low-rise, use full ASCE methods. Positive pressures are inward; negative are outward (suction).</p>
+      </div>
+
+      <main class="grid-layout">
+        <section class="card inputs-panel">
+          <h2>Parameters</h2>
+          
           <div class="input-group">
-            <label>Length (ft)</label>
-            <input type="number" id="length" placeholder="e.g. 50">
+            <label>Ultimate Wind Speed, V (mph) <span class="help-icon" data-tooltip="From ASCE 7-22 risk category maps">?</span></label>
+            <input type="number" id="windSpeed" placeholder="e.g. 150">
           </div>
-          <div class="input-group">
-            <label>Width (ft)</label>
-            <input type="number" id="width" placeholder="e.g. 30">
-          </div>
-        </div>
 
-        <div class="input-group">
-          <label>Mean Roof Height, h (ft) <span class="help-icon" data-tooltip="Must be ≤ 60 ft for low-rise">?</span></label>
-          <input type="number" id="height" placeholder="e.g. 15">
-        </div>
-
-        <div class="input-group">
-          <label>Exposure Category <span class="help-icon" data-tooltip="B: Urban, C: Open, D: Coastal">?</span></label>
-          <select id="exposure">
-            <option value="B">B - Urban / Suburban</option>
-            <option value="C" selected>C - Open Terrain</option>
-            <option value="D">D - Coastal</option>
-          </select>
-        </div>
-
-        <div class="input-group">
-          <label>Topographic Factor (Kzt) <span class="help-icon" data-tooltip="Default 1.0 for flat terrain">?</span></label>
-          <select id="kzt">
-            <option value="1.0" selected>1.0 (Flat Terrain)</option>
-            <option value="1.2">1.2 (Moderate Hill)</option>
-            <option value="1.4">1.4 (Significant Ridge)</option>
-            <option value="1.6">1.6 (Steep Escarpment)</option>
-          </select>
-        </div>
-
-        <div class="input-group">
-          <label>Effective Wind Area (sq ft) <span class="help-icon" data-tooltip="Tributary area of component">?</span></label>
-          <input type="number" id="area" placeholder="e.g. 20">
-        </div>
-
-        <button class="btn btn-primary" onclick="calculate()">Calculate Pressures</button>
-        <button class="btn btn-secondary" onclick="resetApp()">Reset Fields</button>
-        <div id="errorMsg" class="error-msg"></div>
-      </section>
-
-      <section class="card" id="resultsPanel">
-        <h2>Design Pressures (Net)</h2>
-        
-        <div class="result-grid">
-          <div class="result-box highlight">
-            <div class="result-label">Zone 4 (Interior)</div>
-            <div class="result-value green" id="z4Pressures">-- / --</div>
-            <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">psf (Pos / Neg)</div>
-          </div>
-          <div class="result-box highlight">
-            <div class="result-label">Zone 5 (Corners)</div>
-            <div class="result-value green" id="z5Pressures">-- / --</div>
-            <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">psf (Pos / Neg)</div>
-          </div>
-        </div>
-
-        <h2 style="margin-top: 2rem;">Component Wind Loads</h2>
-        <div class="result-grid">
-          <div class="result-box">
-            <div class="result-label">Zone 4 Total Force</div>
-            <div class="result-value" id="z4Loads">-- / --</div>
-            <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">lbs (Pos / Neg)</div>
-          </div>
-          <div class="result-box">
-            <div class="result-label">Zone 5 Total Force</div>
-            <div class="result-value" id="z5Loads">-- / --</div>
-            <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">lbs (Pos / Neg)</div>
-          </div>
-        </div>
-
-        <details class="breakdown">
-          <summary>View Calculation Breakdown</summary>
-          <div class="breakdown-content" id="calcSteps">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="input-group">
+              <label>Length (ft)</label>
+              <input type="number" id="length" placeholder="e.g. 50">
             </div>
-        </details>
+            <div class="input-group">
+              <label>Width (ft)</label>
+              <input type="number" id="width" placeholder="e.g. 30">
+            </div>
+          </div>
 
-        <div class="action-bar">
-          <button class="btn btn-action" onclick="copySummary()">Copy Summary</button>
-          <button class="btn btn-action" onclick="window.print()">Print PDF</button>
-        </div>
-      </section>
-    </main>
+          <div class="input-group">
+            <label>Mean Roof Height, h (ft) <span class="help-icon" data-tooltip="Must be ≤ 60 ft for low-rise">?</span></label>
+            <input type="number" id="height" placeholder="e.g. 15">
+          </div>
 
-    <footer class="lead-gen-footer">
-      <h3>Need a PE Stamped Letter?</h3>
-      <p>Oasis Engineering provides fast, reliable structural consulting and PE stamped review letters for complex fenestration and custom components.</p>
-      <a href="/contact" class="btn btn-primary" style="text-decoration:none;">Contact Our Engineers</a>
-    </footer>
+          <div class="input-group">
+            <label>Exposure Category <span class="help-icon" data-tooltip="B: Urban, C: Open, D: Coastal">?</span></label>
+            <select id="exposure">
+              <option value="B">B - Urban / Suburban</option>
+              <option value="C" selected>C - Open Terrain</option>
+              <option value="D">D - Coastal</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Topographic Factor (Kzt) <span class="help-icon" data-tooltip="Default 1.0 for flat terrain">?</span></label>
+            <select id="kzt">
+              <option value="1.0" selected>1.0 (Flat Terrain)</option>
+              <option value="1.2">1.2 (Moderate Hill)</option>
+              <option value="1.4">1.4 (Significant Ridge)</option>
+              <option value="1.6">1.6 (Steep Escarpment)</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Effective Wind Area (sq ft) <span class="help-icon" data-tooltip="Tributary area of component">?</span></label>
+            <input type="number" id="area" placeholder="e.g. 20">
+          </div>
+
+          <button class="btn btn-primary" onclick="calculate()">Calculate Pressures</button>
+          <button class="btn btn-secondary" type="button" onclick="resetApp()">Reset Fields</button>
+          <div id="errorMsg" class="error-msg"></div>
+        </section>
+
+        <section class="card" id="resultsPanel">
+          
+          <div class="print-only-summary" id="printInputSummary">
+            </div>
+
+          <h2>Design Pressures (Net)</h2>
+          
+          <div class="result-grid">
+            <div class="result-box highlight">
+              <div class="result-label">Zone 4 (Interior)</div>
+              <div class="result-value green" id="z4Pressures">-- / --</div>
+              <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">psf (Pos / Neg)</div>
+            </div>
+            <div class="result-box highlight">
+              <div class="result-label">Zone 5 (Corners)</div>
+              <div class="result-value green" id="z5Pressures">-- / --</div>
+              <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">psf (Pos / Neg)</div>
+            </div>
+          </div>
+
+          <h2 style="margin-top: 2rem;">Component Wind Loads</h2>
+          <div class="result-grid">
+            <div class="result-box">
+              <div class="result-label">Zone 4 Total Force</div>
+              <div class="result-value" id="z4Loads">-- / --</div>
+              <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">lbs (Pos / Neg)</div>
+            </div>
+            <div class="result-box">
+              <div class="result-label">Zone 5 Total Force</div>
+              <div class="result-value" id="z5Loads">-- / --</div>
+              <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">lbs (Pos / Neg)</div>
+            </div>
+          </div>
+
+          <details class="breakdown">
+            <summary>View Calculation Breakdown</summary>
+            <div class="breakdown-content" id="calcSteps">
+              </div>
+          </details>
+
+          <div class="action-bar">
+            <button class="btn btn-action" onclick="copySummary()">Copy Summary</button>
+            <button class="btn btn-action" onclick="window.print()">Print PDF</button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="lead-gen-footer">
+        <h3>Need a PE Stamped Letter?</h3>
+        <p>Oasis Engineering provides fast, reliable structural consulting and PE stamped review letters for complex fenestration and custom components.</p>
+        <a href="/contact" class="btn btn-primary">Contact Our Engineers</a>
+      </footer>
+    </div>
   </div>
 
   <script>
@@ -467,6 +562,10 @@
         .catch(() => {
           document.getElementById('usageCounter').textContent = "Engineering Tools";
         });
+        
+      // Set Print Date
+      const today = new Date();
+      document.getElementById('printDate').textContent = "Generated on: " + today.toLocaleDateString();
     });
 
     // --- 2. Engineering Math Logic ---
@@ -510,7 +609,6 @@
       if (h > 60) {
         err.textContent = "Warning: Mean roof height > 60 ft. ASCE 7 low-rise method is not applicable.";
         err.style.display = 'block';
-        // Continue calculating but show warning
       }
 
       // ASCE 7-22 Step-by-Step
@@ -534,12 +632,26 @@
       const pNegZ4 = qh * (GCp_negZ4 - GCpi);
       const pNegZ5 = qh * (GCp_negZ5 - GCpi);
 
-      // DOM Updates
+      // DOM Updates - Pressures
       document.getElementById('z4Pressures').textContent = `${pPos.toFixed(1)} / ${pNegZ4.toFixed(1)}`;
       document.getElementById('z5Pressures').textContent = `${pPos.toFixed(1)} / ${pNegZ5.toFixed(1)}`;
       
+      // DOM Updates - Loads
       document.getElementById('z4Loads').textContent = `${(pPos*area).toFixed(0)} / ${(pNegZ4*area).toFixed(0)}`;
       document.getElementById('z5Loads').textContent = `${(pPos*area).toFixed(0)} / ${(pNegZ5*area).toFixed(0)}`;
+
+      // DOM Updates - Print Summary Generation
+      document.getElementById('printInputSummary').innerHTML = `
+        <h3>Input Parameters</h3>
+        <div class="summary-grid">
+          <div class="summary-item"><strong>Wind Speed (V)</strong> ${V} mph</div>
+          <div class="summary-item"><strong>Building Dims (L x W)</strong> ${L}ft x ${W}ft</div>
+          <div class="summary-item"><strong>Mean Roof Height (h)</strong> ${h} ft</div>
+          <div class="summary-item"><strong>Exposure</strong> Category ${exp}</div>
+          <div class="summary-item"><strong>Topo Factor (Kzt)</strong> ${Kzt}</div>
+          <div class="summary-item"><strong>Effective Area</strong> ${area} sq.ft</div>
+        </div>
+      `;
 
       // Breakdown text
       document.getElementById('calcSteps').innerHTML = `
