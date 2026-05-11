@@ -213,12 +213,6 @@
       margin-top: 1rem; display: none; font-weight: 500;
     }
 
-    .validation-note {
-      background: #f0f7f4; border-left: 3px solid var(--accent-green);
-      padding: 0.75rem 1rem; margin-top: 1rem; border-radius: 4px;
-      font-size: 0.85rem; color: var(--text-muted);
-    }
-    .validation-note strong { color: var(--accent-green); }
 
     .print-only-header, .print-only-summary { display: none; }
     @media print {
@@ -343,12 +337,6 @@
           <button class="btn btn-primary" onclick="calculate()">Calculate Pressures</button>
           <button class="btn btn-secondary" type="button" onclick="resetApp()">Reset Fields</button>
           <div id="errorMsg" class="error-msg"></div>
-
-          <div class="validation-note">
-            <strong>Reference verification (V=160 mph, Exp C, h=30 ft, A=1 sf, θ=5°):</strong>
-            Kh ≈ 0.98, qh ≈ 64.3 psf. Zone 4: ≈ +59 / −64 psf. Zone 5: ≈ +59 / −79 psf.
-            Matches third party reference output for the same inputs.
-          </div>
         </section>
 
         <section class="card" id="resultsPanel">
@@ -434,8 +422,8 @@
     //   Kz = 2.41 * (z_eff / zg)^(2/alpha)
     //   where z_eff = max(z_actual, zmin) capped at zg
     //
-    // VERIFICATION vs Third Party Software2 (V=160, Exp C, h=30):
-    //   Kh = 0.9805     (Ref table: 0.980)
+    // VERIFICATION (V=160, Exp C, h=30):
+    //   Kh = 0.9805
     //   qh = 64.26 psf  (no Kd in qh per Eq 26.10-1)
     //   Z4 pos A=1, theta<=10:  +58.99 psf
     //   Z5 neg A=1, theta<=10:  -78.65 psf
