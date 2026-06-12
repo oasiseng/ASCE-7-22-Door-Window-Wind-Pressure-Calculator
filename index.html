@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ASCE 7-22 Door/Window Wind Pressure Calculator | Oasis Engineering</title>
-  
+
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "ASCE 7-22 Door/Window Wind Pressure Calculator",
     "url": "https://www.oasisengineering.com/free-wind-load-calculator",
-    "description": "Calculates wind pressures on doors and windows for low-rise buildings based on ASCE 7-22 Components and Cladding.",
+    "description": "Calculates ultimate (LRFD) and ASD wind pressures on doors and windows for low-rise buildings per ASCE 7-22 Components and Cladding, including enclosure classification, ground elevation factor, and the Section 30.2.2 minimum pressure check.",
     "applicationCategory": "EngineeringTool",
     "operatingSystem": "Any",
     "provider": {
@@ -35,6 +35,8 @@
       --accent-green-hover: #13463a;
       --border-color: #e2dfd8;
       --error-color: #d93025;
+      --warn-color: #9a6700;
+      --warn-bg: #fff7e0;
       --info-bg: #eaf1ef;
       --radius: 12px;
       --shadow: 0 4px 20px rgba(26, 23, 20, 0.05);
@@ -43,7 +45,7 @@
     }
 
     .app-container, .app-container * { box-sizing: border-box; }
-    
+
     .oasis-calculator-wrapper {
       font-family: var(--font-body);
       background-color: var(--bg-color);
@@ -56,7 +58,7 @@
 
     .app-header {
       display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
     }
     .app-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--text-main); margin: 0; }
 
@@ -69,48 +71,57 @@
 
     .instructions-box {
       background-color: var(--info-bg); border: 1px solid var(--accent-green);
-      border-radius: var(--radius); padding: 1.5rem 2rem; margin-bottom: 2rem;
+      border-radius: var(--radius); padding: 1.25rem 1.75rem; margin-bottom: 1.5rem;
     }
-    .instructions-box h2 { color: var(--accent-green); margin-top: 0; margin-bottom: 0.5rem; font-size: 1.25rem; }
-    .instructions-box p { margin-bottom: 0.5rem; font-size: 0.95rem; }
-    .instructions-box ol { margin-bottom: 1rem; padding-left: 1.5rem; font-size: 0.95rem; }
+    .instructions-box > p { margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+    .instructions-box details summary {
+      color: var(--accent-green); font-weight: 600; cursor: pointer;
+      font-size: 0.95rem; user-select: none;
+    }
+    .instructions-box ol { margin: 0.75rem 0; padding-left: 1.5rem; font-size: 0.95rem; }
     .instructions-box li { margin-bottom: 0.25rem; }
+    .instructions-box details p { font-size: 0.95rem; margin: 0.5rem 0; }
 
     .grid-layout {
       display: grid; grid-template-columns: 1fr 1.2fr;
       gap: 1.5rem; align-items: start;
+    }
+    @media (max-width: 860px) {
+      .grid-layout { grid-template-columns: 1fr; }
+      .oasis-calculator-wrapper { padding: 1rem 0.75rem; }
     }
 
     .card {
       background: var(--surface-color); border-radius: var(--radius);
       padding: 2rem; box-shadow: var(--shadow); border: 1px solid var(--border-color);
     }
+    @media (max-width: 480px) { .card { padding: 1.25rem; } }
     .card h2 {
       font-size: 1.25rem; margin-top: 0; margin-bottom: 1.5rem;
       padding-bottom: 0.5rem; border-bottom: 2px solid var(--bg-color);
     }
 
-    .input-group {
-      margin-bottom: 1.25rem; display: flex; flex-direction: column;
-    }
+    .input-group { margin-bottom: 1.1rem; display: flex; flex-direction: column; }
     .input-group label {
       display: flex; align-items: center; font-weight: 600;
-      margin-bottom: 0.5rem; font-size: 0.95rem;
+      margin-bottom: 0.4rem; font-size: 0.95rem;
     }
+    .input-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem; }
 
     .app-container .input-group input[type="number"],
     .app-container .input-group input[type="text"],
     .app-container .input-group select {
       width: 100% !important; min-width: 100% !important; max-width: 100% !important;
       box-sizing: border-box !important; flex: 1 1 100% !important;
-      margin: 0 !important; padding: 0.75rem 1rem !important;
+      margin: 0 !important; padding: 0.7rem 1rem !important;
       border: 1.5px solid var(--border-color) !important; border-radius: 8px !important;
       font-family: var(--font-mono) !important; font-size: 1rem !important;
       color: var(--text-main) !important; background-color: #faf9f7 !important;
-      transition: all 0.2s ease !important; height: auto !important; line-height: normal !important;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+      height: auto !important; line-height: normal !important;
     }
 
-    .app-container .input-group input:focus, 
+    .app-container .input-group input:focus,
     .app-container .input-group select:focus {
       outline: none !important; border-color: var(--accent-green) !important;
       background-color: var(--surface-color) !important;
@@ -122,19 +133,23 @@
       width: 18px; height: 18px; border-radius: 50%;
       background: var(--border-color); color: var(--text-muted);
       font-size: 11px; font-weight: bold; cursor: help;
-      margin-left: 0.5rem; transition: all 0.2s;
+      margin-left: 0.5rem; transition: background 0.2s, color 0.2s; flex: 0 0 auto;
     }
-    .help-icon:hover { background: var(--accent-green); color: var(--surface-color); }
+    .help-icon:hover, .help-icon:focus-visible { background: var(--accent-green); color: var(--surface-color); outline: none; }
     .help-icon::after {
       content: attr(data-tooltip); position: absolute;
       bottom: 130%; left: 50%; transform: translateX(-50%);
       background: var(--text-main); color: var(--surface-color);
       padding: 0.5rem 0.75rem; border-radius: 6px;
       font-size: 0.8rem; font-family: var(--font-body); font-weight: 400;
-      white-space: nowrap; opacity: 0; pointer-events: none;
-      transition: opacity 0.2s, bottom 0.2s; z-index: 10;
+      white-space: normal; width: max-content; max-width: 240px; text-align: left;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s; z-index: 10;
     }
-    .help-icon:hover::after { opacity: 1; bottom: 140%; }
+    .help-icon:hover::after, .help-icon:focus-visible::after { opacity: 1; }
+    @media (prefers-reduced-motion: reduce) {
+      .app-container * { transition: none !important; }
+    }
 
     .app-container .btn {
       display: inline-flex; justify-content: center; align-items: center;
@@ -143,6 +158,7 @@
       transition: background 0.2s, transform 0.1s;
       font-family: var(--font-body); text-decoration: none;
     }
+    .app-container .btn:focus-visible { outline: 3px solid rgba(26, 92, 76, 0.4); outline-offset: 2px; }
     .app-container .btn-primary {
       background: var(--accent-green); color: var(--surface-color);
       width: 100%; margin-bottom: 0.5rem;
@@ -160,31 +176,63 @@
     .app-container .btn-action:hover { border-color: var(--accent-green); color: var(--accent-green); }
 
     #resultsPanel { display: none; }
+
+    .stat-strip {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 480px) { .stat-strip { grid-template-columns: repeat(2, 1fr); } }
+    .stat-box {
+      background: #faf9f7; border: 1px solid var(--border-color);
+      border-radius: 8px; padding: 0.6rem 0.75rem;
+    }
+    .stat-box .stat-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-box .stat-value { font-family: var(--font-mono); font-size: 1rem; font-weight: 700; }
+
     .result-grid {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 1rem; margin-bottom: 1.5rem;
     }
+    @media (max-width: 480px) { .result-grid { grid-template-columns: 1fr; } }
     .result-box {
       background: #faf9f7; padding: 1rem; border-radius: 8px;
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border-color); position: relative;
     }
-    .result-box.highlight {
-      background: rgba(26, 92, 76, 0.05); border-color: var(--accent-green);
-    }
+    .result-box.highlight { background: rgba(26, 92, 76, 0.05); border-color: var(--accent-green); }
     .result-label {
       font-size: 0.85rem; color: var(--text-muted);
       font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
     }
     .result-value {
-      font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700;
+      font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700;
       color: var(--text-main); margin-top: 0.25rem;
     }
     .result-value.green { color: var(--accent-green); }
-
-    .action-bar {
-      display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem;
-      border-top: 1px solid var(--border-color);
+    .result-sub {
+      font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);
+      margin-top: 0.35rem; border-top: 1px dashed var(--border-color); padding-top: 0.35rem;
     }
+    .min-badge {
+      display: none; position: absolute; top: 0.6rem; right: 0.6rem;
+      background: var(--warn-bg); color: var(--warn-color);
+      border: 1px solid var(--warn-color); border-radius: 12px;
+      font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.5rem;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .min-badge.show { display: inline-block; }
+
+    /* Zone diagram */
+    .zone-diagram-wrap { margin: 0.5rem 0 1rem 0; }
+    .zone-diagram-wrap svg { width: 100%; height: auto; display: block; }
+    .zd-wall { fill: var(--surface-color); stroke: var(--text-main); stroke-width: 2; }
+    .zd-corner { fill: rgba(26, 92, 76, 0.18); stroke: var(--accent-green); stroke-width: 1; }
+    .zd-roof { fill: none; stroke: var(--text-main); stroke-width: 2; }
+    .zd-ground { stroke: var(--text-muted); stroke-width: 1.5; }
+    .zd-label { font-family: var(--font-mono); font-size: 15px; font-weight: 700; fill: var(--text-main); }
+    .zd-label.z5 { fill: var(--accent-green); }
+    .zd-dim { stroke: var(--text-muted); stroke-width: 1; }
+    .zd-dim-text { font-family: var(--font-mono); font-size: 12px; fill: var(--text-muted); }
+    .zd-caption { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
 
     details.breakdown {
       margin-top: 1.5rem; background: #faf9f7;
@@ -197,33 +245,51 @@
       padding: 0 1rem 1rem 1rem; font-family: var(--font-mono);
       font-size: 0.85rem; color: var(--text-muted);
     }
-    .breakdown-content p { margin-bottom: 0.5rem; }
+    .breakdown-content p { margin: 0 0 0.5rem 0; }
 
     .lead-gen-footer {
       margin-top: 2rem; background: var(--surface-color);
       border: 1px solid var(--border-color); border-radius: var(--radius);
       padding: 2rem; text-align: center;
     }
-    .lead-gen-footer h3 { color: var(--accent-green); margin-bottom: 0.5rem; margin-top:0; }
-    .lead-gen-footer p { color: var(--text-muted); margin-bottom: 1.5rem; max-width: 600px; margin-inline: auto;}
+    .lead-gen-footer h3 { color: var(--accent-green); margin-bottom: 0.5rem; margin-top: 0; }
+    .lead-gen-footer p { color: var(--text-muted); margin-bottom: 1.5rem; max-width: 600px; margin-inline: auto; }
     .lead-gen-footer .btn { max-width: 250px; }
+
+    .action-bar {
+      display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
 
     .error-msg {
       color: var(--error-color); font-size: 0.875rem;
       margin-top: 1rem; display: none; font-weight: 500;
     }
+    .warn-msg {
+      color: var(--warn-color); background: var(--warn-bg);
+      border: 1px solid #e3cf8a; border-radius: 8px;
+      font-size: 0.875rem; margin-top: 1rem; display: none;
+      font-weight: 500; padding: 0.6rem 0.9rem;
+    }
+    .warn-msg p { margin: 0 0 0.25rem 0; }
+    .warn-msg p:last-child { margin-bottom: 0; }
 
+    .footnote { font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem; }
 
-    .print-only-header, .print-only-summary { display: none; }
+    .print-only-header, .print-only-summary, .print-only-disclaimer { display: none; }
     @media print {
       body { background: white; padding: 0; margin: 0; }
       .oasis-calculator-wrapper { padding: 0; background: white; }
-      .app-header, .instructions-box, .inputs-panel, .action-bar, .lead-gen-footer, details.breakdown { 
-        display: none !important; 
+      .app-header, .instructions-box, .inputs-panel, .action-bar, .lead-gen-footer {
+        display: none !important;
       }
       .grid-layout { display: block; }
       .card { border: none; box-shadow: none; padding: 0; margin: 0; }
-      #resultsPanel { display: block; width: 100%; page-break-inside: avoid; }
+      #resultsPanel { display: block; width: 100%; }
+      .result-grid, .stat-strip, .zone-diagram-wrap { page-break-inside: avoid; }
+      details.breakdown { border: 1px solid #ccc; page-break-inside: avoid; }
+      details.breakdown summary { list-style: none; }
+      details.breakdown summary::-webkit-details-marker { display: none; }
       .print-only-header {
         display: block; border-bottom: 3px solid var(--accent-green);
         padding-bottom: 1rem; margin-bottom: 2rem;
@@ -241,7 +307,11 @@
         gap: 1rem; font-size: 14px;
       }
       .summary-item strong { display: block; color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
-      .result-box { border: 1px solid #ccc !important; background: white !important; }
+      .result-box, .stat-box { border: 1px solid #ccc !important; background: white !important; }
+      .print-only-disclaimer {
+        display: block; margin-top: 2rem; padding-top: 1rem;
+        border-top: 1px solid #ccc; font-size: 11px; color: var(--text-muted);
+      }
     }
   </style>
 </head>
@@ -249,145 +319,212 @@
 
   <div class="oasis-calculator-wrapper">
     <div class="app-container">
-      
+
       <div class="print-only-header">
         <h1>OASIS ENGINEERING</h1>
-        <p><strong>ASCE 7-22 Components &amp; Cladding Wind Pressure Report</strong></p>
+        <p><strong>ASCE 7-22 Components &amp; Cladding Wind Pressure Report &mdash; Wall Openings (Zones 4 &amp; 5)</strong></p>
         <p id="printDate"></p>
       </div>
 
       <header class="app-header">
         <h1>Oasis Engineering ASCE 7-22 Wind Tool</h1>
         <div class="badge-counter">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           <span id="usageCounter">Loading...</span>
         </div>
       </header>
 
       <div class="instructions-box">
-        <h2>How to Use This Calculator</h2>
-        <p>This tool estimates wind pressures on doors and windows (components and cladding) for low-rise enclosed buildings per ASCE 7-22. Follow these steps:</p>
-        <ol>
-          <li><strong>Wind Speed</strong>: Enter the ultimate wind speed (V) in mph from ASCE 7-22 maps for your risk category and location.</li>
-          <li><strong>Building Dimensions</strong>: Input the length, width, and mean roof height (h) in feet (assumes low-rise, h ≤ 60 ft).</li>
-          <li><strong>Exposure Category</strong>: Choose B (urban/suburban), C (open terrain), or D (coastal/flat) based on surrounding terrain.</li>
-          <li><strong>Topographic Factor (Kzt)</strong>: Enter Kzt (default 1.0 for flat sites; use ASCE Fig. 26.8-1 if hill/ridge/escarpment).</li>
-          <li><strong>Roof Slope (θ)</strong>: For θ ≤ 10°, wall GCp values (Zones 4 &amp; 5) are reduced by 10% per ASCE Fig. 30.3-1 footnote.</li>
-          <li><strong>Effective Wind Area</strong>: Enter the area (A) of the door or window in sq ft (affects GCp by log-interpolation).</li>
-          <li>Click "Calculate" to see results, including pressures and loads for Zones 4 (interior) and 5 (corners).</li>
-        </ol>
-        <p><strong>Understanding Zones:</strong> Zone 5 is the end zone within 'a' feet from corners/edges (calculated per ASCE 30.3). Zone 4 is the interior wall area. Assumes enclosed building (GCpi = ±0.18).</p>
-        <p><strong>Note:</strong> For h > 60 ft or non-low-rise, use full ASCE methods. Positive pressures are inward; negative are outward (suction). ASCE 7-22 places Kd in the pressure equation (Eq. 30.3-1), not in qh.</p>
+        <p>Estimates ultimate (LRFD) and ASD wind pressures on doors and windows &mdash; components and cladding, wall Zones 4 and 5 &mdash; for low-rise enclosed or partially enclosed buildings per ASCE 7-22 Chapter 30, Part 1.</p>
+        <details>
+          <summary>How to use this calculator</summary>
+          <ol>
+            <li><strong>Wind speed</strong>: Enter the ultimate wind speed (V) in mph from the ASCE 7-22 maps (or the ASCE Hazard Tool) for your risk category and location.</li>
+            <li><strong>Building dimensions</strong>: Input the length, width, and mean roof height (h) in feet. The low-rise method applies for h &le; 60 ft.</li>
+            <li><strong>Exposure category</strong>: Choose B (urban/suburban), C (open terrain), or D (coastal/flat) based on surrounding terrain.</li>
+            <li><strong>Enclosure</strong>: Enclosed or partially open buildings use GCpi = &plusmn;0.18; partially enclosed (e.g., large unprotected openings on one wall) use &plusmn;0.55 per Table 26.13-1.</li>
+            <li><strong>Topographic factor (Kzt)</strong>: 1.0 for flat sites; compute per ASCE Fig. 26.8-1 for hills, ridges, or escarpments.</li>
+            <li><strong>Roof slope (&theta;)</strong>: For &theta; &le; 10&deg;, wall GCp values are reduced 10% per the Fig. 30.3-1 footnote.</li>
+            <li><strong>Ground elevation</strong>: Optional. Site elevation above sea level sets Ke per Table 26.9-1 (leave 0 for the conservative Ke = 1.0).</li>
+            <li><strong>Effective wind area</strong>: The component's tributary area (sq ft). GCp is log-interpolated between A = 10 and A = 500 sq ft.</li>
+          </ol>
+          <p><strong>Zones:</strong> Zone 5 is the end zone within distance 'a' of building corners; Zone 4 is the remaining wall area. The diagram in the results shows where each applies.</p>
+          <p><strong>Outputs:</strong> Ultimate pressures are strength-level (1.0W). ASD values are 0.6 &times; ultimate, the level usually compared against window/door DP ratings &mdash; confirm with your product approval and AHJ. A 16 psf strength-level minimum is enforced per Section 30.2.2.</p>
+        </details>
       </div>
 
       <main class="grid-layout">
         <section class="card inputs-panel">
           <h2>Parameters</h2>
-          
+
           <div class="input-group">
-            <label>Ultimate Wind Speed, V (mph) <span class="help-icon" data-tooltip="From ASCE 7-22 risk category maps">?</span></label>
-            <input type="number" id="windSpeed" placeholder="e.g. 150">
+            <label for="windSpeed">Ultimate Wind Speed, V (mph) <span class="help-icon" tabindex="0" data-tooltip="From ASCE 7-22 risk category maps or the ASCE Hazard Tool. This is the ultimate (strength-level) speed, not the old fastest-mile or ASD speed.">?</span></label>
+            <input type="number" id="windSpeed" inputmode="decimal" min="0" placeholder="e.g. 150">
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="input-group">
-              <label>Length (ft)</label>
-              <input type="number" id="length" placeholder="e.g. 50">
+              <label for="length">Length (ft)</label>
+              <input type="number" id="length" inputmode="decimal" min="0" placeholder="e.g. 50">
             </div>
             <div class="input-group">
-              <label>Width (ft)</label>
-              <input type="number" id="width" placeholder="e.g. 30">
+              <label for="width">Width (ft)</label>
+              <input type="number" id="width" inputmode="decimal" min="0" placeholder="e.g. 30">
             </div>
           </div>
 
           <div class="input-group">
-            <label>Mean Roof Height, h (ft) <span class="help-icon" data-tooltip="Must be ≤ 60 ft for low-rise">?</span></label>
-            <input type="number" id="height" placeholder="e.g. 15">
+            <label for="height">Mean Roof Height, h (ft) <span class="help-icon" tabindex="0" data-tooltip="Average of eave and ridge heights (eave height for slopes ≤ 10°). Must be ≤ 60 ft for the low-rise method.">?</span></label>
+            <input type="number" id="height" inputmode="decimal" min="0" placeholder="e.g. 15">
           </div>
 
           <div class="input-group">
-            <label>Exposure Category <span class="help-icon" data-tooltip="B: Urban, C: Open, D: Coastal">?</span></label>
+            <label for="exposure">Exposure Category <span class="help-icon" tabindex="0" data-tooltip="B: urban/suburban or wooded. C: open terrain, scattered obstructions. D: flat unobstructed areas and water surfaces.">?</span></label>
             <select id="exposure">
               <option value="B">B - Urban / Suburban</option>
               <option value="C" selected>C - Open Terrain</option>
-              <option value="D">D - Coastal</option>
+              <option value="D">D - Coastal / Flat</option>
             </select>
           </div>
 
           <div class="input-group">
-            <label>Topographic Factor (Kzt) <span class="help-icon" data-tooltip="Default 1.0 for flat terrain">?</span></label>
-            <select id="kzt">
-              <option value="1.0" selected>1.0 (Flat Terrain)</option>
-              <option value="1.2">1.2 (Moderate Hill)</option>
-              <option value="1.4">1.4 (Significant Ridge)</option>
-              <option value="1.6">1.6 (Steep Escarpment)</option>
+            <label for="enclosure">Enclosure Classification <span class="help-icon" tabindex="0" data-tooltip="Partially enclosed (e.g., a large door opening on one wall without impact protection) raises internal pressure to ±0.55 per Table 26.13-1.">?</span></label>
+            <select id="enclosure">
+              <option value="enclosed" selected>Enclosed (GCpi = &plusmn;0.18)</option>
+              <option value="partiallyOpen">Partially Open (GCpi = &plusmn;0.18)</option>
+              <option value="partiallyEnclosed">Partially Enclosed (GCpi = &plusmn;0.55)</option>
             </select>
           </div>
 
           <div class="input-group">
-            <label>Roof Slope, θ (degrees) <span class="help-icon" data-tooltip="θ ≤ 10° triggers 10% wall GCp reduction">?</span></label>
-            <input type="number" id="theta" placeholder="e.g. 5" value="5" step="0.1" min="0">
+            <label for="kzt">Topographic Factor, Kzt <span class="help-icon" tabindex="0" data-tooltip="1.0 for flat terrain. For hills, ridges, or escarpments compute Kzt = (1 + K1·K2·K3)² per ASCE Fig. 26.8-1 and enter the value here.">?</span></label>
+            <input type="number" id="kzt" inputmode="decimal" min="1" step="0.01" value="1.0">
+            <span class="input-hint">1.0 = flat site. Typical hill/escarpment values run 1.1&ndash;1.6.</span>
           </div>
 
           <div class="input-group">
-            <label>Effective Wind Area (sq ft) <span class="help-icon" data-tooltip="Tributary area of component">?</span></label>
-            <input type="number" id="area" placeholder="e.g. 20">
+            <label for="theta">Roof Slope, &theta; (degrees) <span class="help-icon" tabindex="0" data-tooltip="θ ≤ 10° triggers the 10% wall GCp reduction per the Fig. 30.3-1 footnote.">?</span></label>
+            <input type="number" id="theta" inputmode="decimal" placeholder="e.g. 5" value="5" step="0.1" min="0" max="90">
           </div>
 
-          <button class="btn btn-primary" onclick="calculate()">Calculate Pressures</button>
-          <button class="btn btn-secondary" type="button" onclick="resetApp()">Reset Fields</button>
-          <div id="errorMsg" class="error-msg"></div>
+          <div class="input-group">
+            <label for="elevation">Ground Elevation (ft above sea level) <span class="help-icon" tabindex="0" data-tooltip="Sets Ke per Table 26.9-1: Ke = e^(−0.0000362·z). Leave 0 for the conservative default Ke = 1.0.">?</span></label>
+            <input type="number" id="elevation" inputmode="decimal" min="0" value="0">
+            <span class="input-hint">Optional. 0 = sea level (Ke = 1.0, always conservative).</span>
+          </div>
+
+          <div class="input-group">
+            <label for="area">Effective Wind Area (sq ft) <span class="help-icon" tabindex="0" data-tooltip="Tributary area of the component. For a single door or window, use its area. Smaller areas give more conservative coefficients.">?</span></label>
+            <input type="number" id="area" inputmode="decimal" min="0" placeholder="e.g. 20">
+          </div>
+
+          <button class="btn btn-primary" id="calcBtn" type="button">Calculate Pressures</button>
+          <button class="btn btn-secondary" id="resetBtn" type="button">Reset Fields</button>
+          <div id="errorMsg" class="error-msg" role="alert"></div>
+          <div id="warnMsg" class="warn-msg" role="status"></div>
         </section>
 
-        <section class="card" id="resultsPanel">
-          
+        <section class="card" id="resultsPanel" aria-live="polite">
+
           <div class="print-only-summary" id="printInputSummary"></div>
 
           <h2>Design Pressures (Net)</h2>
-          
+
+          <div class="stat-strip">
+            <div class="stat-box"><div class="stat-label">End Zone, a</div><div class="stat-value" id="statA">--</div></div>
+            <div class="stat-box"><div class="stat-label">Kh</div><div class="stat-value" id="statKh">--</div></div>
+            <div class="stat-box"><div class="stat-label">qh</div><div class="stat-value" id="statQh">--</div></div>
+            <div class="stat-box"><div class="stat-label">Ke</div><div class="stat-value" id="statKe">--</div></div>
+          </div>
+
           <div class="result-grid">
             <div class="result-box highlight">
+              <span class="min-badge" id="z4MinBadge">16 psf min</span>
               <div class="result-label">Zone 4 (Interior)</div>
               <div class="result-value green" id="z4Pressures">-- / --</div>
-              <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">psf (Pos / Neg)</div>
+              <div class="result-label" style="margin-top: 0.4rem; text-transform:none;">psf ultimate (Pos / Neg)</div>
+              <div class="result-sub" id="z4Asd">ASD 0.6W: -- / -- psf</div>
             </div>
             <div class="result-box highlight">
+              <span class="min-badge" id="z5MinBadge">16 psf min</span>
               <div class="result-label">Zone 5 (Corners)</div>
               <div class="result-value green" id="z5Pressures">-- / --</div>
-              <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">psf (Pos / Neg)</div>
+              <div class="result-label" style="margin-top: 0.4rem; text-transform:none;">psf ultimate (Pos / Neg)</div>
+              <div class="result-sub" id="z5Asd">ASD 0.6W: -- / -- psf</div>
             </div>
           </div>
 
-          <h2 style="margin-top: 2rem;">Component Wind Loads</h2>
+          <div class="zone-diagram-wrap">
+            <svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="zdTitle">
+              <title id="zdTitle">Wall elevation showing Zone 5 corner strips of width a and Zone 4 interior wall area</title>
+              <defs>
+                <pattern id="zdHatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+                  <line x1="0" y1="0" x2="0" y2="8" stroke="#1a5c4c" stroke-width="1.5" opacity="0.45"/>
+                </pattern>
+              </defs>
+              <!-- roof line -->
+              <polyline class="zd-roof" points="50,80 320,52 590,80"/>
+              <!-- wall -->
+              <rect class="zd-wall" x="60" y="80" width="520" height="125"/>
+              <!-- corner zone strips (width set by JS) -->
+              <rect class="zd-corner" id="zdLeft"  x="60"  y="80" width="60" height="125" fill="url(#zdHatch)"/>
+              <rect class="zd-corner" id="zdRight" x="520" y="80" width="60" height="125" fill="url(#zdHatch)"/>
+              <!-- ground -->
+              <line class="zd-ground" x1="30" y1="205" x2="610" y2="205"/>
+              <!-- zone labels -->
+              <text class="zd-label z5" id="zdL5a" x="90"  y="148" text-anchor="middle">5</text>
+              <text class="zd-label"     x="320" y="148" text-anchor="middle">4</text>
+              <text class="zd-label z5" id="zdL5b" x="550" y="148" text-anchor="middle">5</text>
+              <!-- 'a' dimension over left strip -->
+              <line class="zd-dim" id="zdDimLine" x1="60" y1="68" x2="120" y2="68"/>
+              <line class="zd-dim" x1="60" y1="62" x2="60" y2="74"/>
+              <line class="zd-dim" id="zdDimTick" x1="120" y1="62" x2="120" y2="74"/>
+              <text class="zd-dim-text" id="zdDimText" x="64" y="58">a = -- ft</text>
+              <!-- legend -->
+              <rect class="zd-corner" x="60" y="222" width="16" height="12" fill="url(#zdHatch)"/>
+              <text class="zd-dim-text" x="82" y="232">Zone 5 (end zone, higher suction)</text>
+              <rect class="zd-wall" x="330" y="222" width="16" height="12"/>
+              <text class="zd-dim-text" x="352" y="232">Zone 4 (interior wall)</text>
+            </svg>
+            <p class="zd-caption" id="zdCaption">An opening within distance 'a' of any building corner uses Zone 5 pressures.</p>
+          </div>
+
+          <h2 style="margin-top: 1.5rem;">Component Wind Loads</h2>
           <div class="result-grid">
             <div class="result-box">
               <div class="result-label">Zone 4 Total Force</div>
               <div class="result-value" id="z4Loads">-- / --</div>
-              <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">lbs (Pos / Neg)</div>
+              <div class="result-label" style="margin-top: 0.4rem; text-transform:none;">lbs ultimate (Pos / Neg)</div>
             </div>
             <div class="result-box">
               <div class="result-label">Zone 5 Total Force</div>
               <div class="result-value" id="z5Loads">-- / --</div>
-              <div class="result-label" style="margin-top: 0.5rem; text-transform:none;">lbs (Pos / Neg)</div>
+              <div class="result-label" style="margin-top: 0.4rem; text-transform:none;">lbs ultimate (Pos / Neg)</div>
             </div>
           </div>
 
-          <details class="breakdown">
+          <details class="breakdown" id="breakdownDetails">
             <summary>View Calculation Breakdown</summary>
             <div class="breakdown-content" id="calcSteps"></div>
           </details>
 
           <div class="action-bar">
-            <button class="btn btn-action" onclick="copySummary()">Copy Summary</button>
-            <button class="btn btn-action" onclick="window.print()">Print PDF</button>
+            <button class="btn btn-action" id="copyBtn" type="button">Copy Summary</button>
+            <button class="btn btn-action" type="button" onclick="window.print()">Print PDF</button>
+          </div>
+
+          <p class="footnote">Positive pressures act inward, negative outward (suction). Ultimate values include the 16 psf minimum of ASCE 7-22 Sec. 30.2.2 where it governs. ASD = 0.6 &times; ultimate.</p>
+
+          <div class="print-only-disclaimer">
+            <p><strong>Basis:</strong> ASCE 7-22 Ch. 30 Part 1 (Fig. 30.3-1, wall Zones 4/5), Eq. 26.10-1 and 30.3-1, Kd = 0.85, log-interpolated GCp, 16 psf minimum per Sec. 30.2.2. Estimate only &mdash; not a sealed engineering document. Verify all designs with a licensed professional engineer. Oasis Engineering assumes no liability for use of this tool. www.oasisengineering.com</p>
           </div>
         </section>
       </main>
 
       <footer class="lead-gen-footer">
         <h3>Need a PE Stamped Letter?</h3>
-        <p>Oasis Engineering provides fast, reliable structural consulting and PE stamped review letters for complex fenestration and custom components.</p>
-        <a href="/contact" class="btn btn-primary">Contact Our Engineers</a>
+        <p>Oasis Engineering provides fast, reliable structural consulting and PE stamped review letters for complex fenestration and custom components, licensed in 37 states.</p>
+        <a href="https://www.oasisengineering.com/contact" class="btn btn-primary">Contact Our Engineers</a>
       </footer>
     </div>
   </div>
@@ -406,43 +543,78 @@
         .catch(() => {
           document.getElementById('usageCounter').textContent = "Engineering Tools";
         });
-        
+
       const today = new Date();
       document.getElementById('printDate').textContent = "Generated on: " + today.toLocaleDateString();
     });
 
     // =============================================================
-    // ASCE 7-22 EXPOSURE CONSTANTS (Table 26.11-1)
+    // ASCE 7-22 CONSTANTS
     //
-    //   B: alpha = 7.5,  zg = 3280 ft, zmin = 30 ft
-    //   C: alpha = 9.8,  zg = 2460 ft, zmin = 15 ft
-    //   D: alpha = 11.5, zg = 1935 ft, zmin = 15 ft
+    // Terrain exposure constants (Table 26.11-1):
+    //   B: alpha = 7.5,  zg = 3280 ft
+    //   C: alpha = 9.8,  zg = 2460 ft
+    //   D: alpha = 11.5, zg = 1935 ft
     //
-    // Kz formula (Note 1 of Table 26.10-1):
-    //   Kz = 2.41 * (z_eff / zg)^(2/alpha)
-    //   where z_eff = max(z_actual, zmin) capped at zg
+    // Kz formula (Table 26.10-1, Note 1):
+    //   Kz = 2.41 * (z/zg)^(2/alpha)  for 15 ft <= z <= zg
+    //   For z < 15 ft, use z = 15 ft (ALL exposures).
+    //   NOTE: The table's "use 0.70 for Exposure B below 30 ft" footnote
+    //   applies only to the Chapter 28 envelope MWFRS procedure, NOT to
+    //   Chapter 30 C&C. Earlier versions of this tool applied a 30 ft
+    //   floor in Exposure B (Kz = 0.70); corrected to the 15 ft floor
+    //   (Kz = 0.57 at 15 ft), matching Table 26.10-1 tabulated values.
     //
-    // VERIFICATION (V=160, Exp C, h=30):
-    //   Kh = 0.9805
-    //   qh = 64.26 psf  (no Kd in qh per Eq 26.10-1)
-    //   Z4 pos A=1, theta<=10:  +58.99 psf
-    //   Z5 neg A=1, theta<=10:  -78.65 psf
+    // VERIFICATION (V=160, Exp C, h=30, A=1, theta=5, enclosed, elev 0):
+    //   Kh = 0.9805,  qh = 64.26 psf  (no Kd in qh per Eq. 26.10-1)
+    //   Z4: +58.99 / -63.90 psf ult;  Z5: +58.99 / -78.65 psf ult
+    // VERIFICATION (V=115, 100x50, h=30, Exp C, A=20, theta=5):
+    //   a = 5.00 ft, Kh = 0.9805, qh = 33.20 psf
+    //   Z4: +29.1 / -31.7 psf ult;  Z5: +29.1 / -37.9 psf ult
+    //   ASD (0.6W): Z4 +17.5 / -19.0;  Z5 +17.5 / -22.8 psf
     // =============================================================
-    const EXPOSURE_CONSTANTS_722 = {
-      B: { alpha: 7.5,  zg: 3280, zmin: 30 },
-      C: { alpha: 9.8,  zg: 2460, zmin: 15 },
-      D: { alpha: 11.5, zg: 1935, zmin: 15 }
+    const ASCE = {
+      EXPOSURE: {
+        B: { alpha: 7.5,  zg: 3280 },
+        C: { alpha: 9.8,  zg: 2460 },
+        D: { alpha: 11.5, zg: 1935 }
+      },
+      KZ_MIN_Z: 15,        // ft — Table 26.10-1 Note 1 formula floor
+      KD: 0.85,            // Table 26.6-1, buildings (applied in Eq. 30.3-1, not in qh)
+      MIN_NET_PRESSURE: 16, // psf — Sec. 30.2.2 C&C minimum, strength level
+      ASD_FACTOR: 0.6,     // 0.6W load combination (Sec. 2.4.1)
+      GCPI: {              // Table 26.13-1
+        enclosed: 0.18,
+        partiallyOpen: 0.18,
+        partiallyEnclosed: 0.55
+      },
+      // Fig. 30.3-1 wall GCp endpoints (A = 10 sf and A = 500 sf)
+      GCP_WALL: {
+        pos:   { a10:  1.0, a500:  0.7 },   // Zones 4 & 5 positive
+        negZ4: { a10: -1.1, a500: -0.8 },
+        negZ5: { a10: -1.4, a500: -0.8 }
+      }
     };
 
-    function computeKz(exposure, height) {
-      const c = EXPOSURE_CONSTANTS_722[exposure];
+    const ENCLOSURE_LABEL = {
+      enclosed: 'Enclosed',
+      partiallyOpen: 'Partially Open',
+      partiallyEnclosed: 'Partially Enclosed'
+    };
+
+    function computeKz(exposure, h) {
+      const c = ASCE.EXPOSURE[exposure];
       if (!c) return 0;
-      // Apply exposure-specific zmin floor (30 for Exp B, 15 for C/D)
-      const zEff = Math.max(height, c.zmin);
-      return 2.41 * Math.pow(zEff / c.zg, 2 / c.alpha);
+      const z = Math.min(Math.max(h, ASCE.KZ_MIN_Z), c.zg);
+      return 2.41 * Math.pow(z / c.zg, 2 / c.alpha);
     }
 
-    // Log-interpolation per ASCE 7-22 Fig. 30.3-1 (between A=10 and A=500)
+    // Ground elevation factor, Table 26.9-1: Ke = e^(-0.0000362 * elevation_ft)
+    function computeKe(elevFt) {
+      return Math.exp(-0.0000362 * Math.max(elevFt || 0, 0));
+    }
+
+    // Log-interpolation per Fig. 30.3-1 between A=10 and A=500 sq ft
     function interpGCp(area, val10, val500) {
       if (area <= 10) return val10;
       if (area >= 500) return val500;
@@ -450,23 +622,44 @@
       return val10 + (val500 - val10) * ((logA - 1) / (Math.log10(500) - 1));
     }
 
+    // Sec. 30.2.2: net C&C design pressure not less than 16 psf either direction
+    function applyMinimum(p) {
+      if (Math.abs(p) >= ASCE.MIN_NET_PRESSURE) return { p: p, governed: false };
+      return { p: ASCE.MIN_NET_PRESSURE * (p < 0 ? -1 : 1), governed: true };
+    }
+
+    const fmt1 = x => x.toFixed(1);
+    const fmtLb = x => Math.round(x).toLocaleString();
+
+    let lastResults = null;
+
     function calculate() {
       const err = document.getElementById('errorMsg');
-      err.style.display = 'none';
-      err.textContent = '';
+      const warnBox = document.getElementById('warnMsg');
+      err.style.display = 'none'; err.textContent = '';
+      warnBox.style.display = 'none'; warnBox.innerHTML = '';
 
-      // Inputs
-      const V    = parseFloat(document.getElementById('windSpeed').value);
-      const L    = parseFloat(document.getElementById('length').value);
-      const W    = parseFloat(document.getElementById('width').value);
-      const h    = parseFloat(document.getElementById('height').value);
-      const exp  = document.getElementById('exposure').value;
-      const Kzt  = parseFloat(document.getElementById('kzt').value);
+      // ---- Inputs ----
+      const V     = parseFloat(document.getElementById('windSpeed').value);
+      const L     = parseFloat(document.getElementById('length').value);
+      const W     = parseFloat(document.getElementById('width').value);
+      const h     = parseFloat(document.getElementById('height').value);
+      const exp   = document.getElementById('exposure').value;
+      const encl  = document.getElementById('enclosure').value;
+      const Kzt   = parseFloat(document.getElementById('kzt').value);
       const theta = parseFloat(document.getElementById('theta').value);
-      const area = parseFloat(document.getElementById('area').value);
+      const elevRaw = document.getElementById('elevation').value;
+      const elev  = elevRaw === '' ? 0 : parseFloat(elevRaw);
+      const area  = parseFloat(document.getElementById('area').value);
 
-      if ([V, L, W, h, Kzt, area].some(isNaN) || V<=0 || L<=0 || W<=0 || h<=0 || area<=0) {
-        err.textContent = "Please enter valid, positive numbers for all required parameters.";
+      // ---- Validation (blocking) ----
+      if ([V, L, W, h, Kzt, area].some(isNaN) || V <= 0 || L <= 0 || W <= 0 || h <= 0 || area <= 0) {
+        err.textContent = "Enter valid, positive numbers for wind speed, dimensions, height, Kzt, and effective area.";
+        err.style.display = 'block';
+        return;
+      }
+      if (Kzt < 1) {
+        err.textContent = "Kzt cannot be less than 1.0.";
         err.style.display = 'block';
         return;
       }
@@ -475,33 +668,42 @@
         err.style.display = 'block';
         return;
       }
-
-      if (h > 60) {
-        err.textContent = "Warning: Mean roof height > 60 ft. ASCE 7-22 low-rise C&C method (Fig. 30.3-1) not applicable; use Figs. 30.5-1 / 30.6-1.";
+      if (isNaN(elev) || elev < 0) {
+        err.textContent = "Ground elevation must be 0 or greater.";
         err.style.display = 'block';
-        // Continue anyway -- user has been warned
+        return;
       }
 
-      // End zone width 'a' per Fig. 30.3-1
-      // a = MIN(0.1*least_dim, 0.4h), but not less than MAX(0.04*least_dim, 3 ft)
+      // ---- Warnings (non-blocking) ----
+      const warnings = [];
+      if (h > 60) warnings.push("Mean roof height > 60 ft: the low-rise C&amp;C method (Fig. 30.3-1) does not apply. Results shown for reference only — use ASCE 7-22 Figs. 30.5-1 / 30.6-1.");
+      if (V < 85 || V > 250) warnings.push("Wind speed is outside the typical ASCE 7-22 map range (85–250 mph). Verify V is the ultimate (strength-level) speed.");
+      if (Kzt > 2) warnings.push("Kzt > 2.0 is unusual. Verify the topographic computation per Fig. 26.8-1.");
+      if (warnings.length) {
+        warnBox.innerHTML = warnings.map(w => `<p>&#9888; ${w}</p>`).join('');
+        warnBox.style.display = 'block';
+      }
+
+      // ---- 1. End zone width 'a' (Fig. 30.3-1 note) ----
+      // a = MIN(0.1 x least horiz dim, 0.4h), but >= MAX(0.04 x least dim, 3 ft)
       const leastDim = Math.min(L, W);
       let a = Math.min(0.1 * leastDim, 0.4 * h);
       a = Math.max(a, 0.04 * leastDim, 3);
 
-      // ASCE 7-22 velocity pressure (Kd NOT in qh)
+      // ---- 2-3. Kh, Ke, qh (Eq. 26.10-1 — Kd is NOT in qh in ASCE 7-22) ----
       const Kz = computeKz(exp, h);
-      const Kd = 0.85; // buildings, Table 26.6-1
-      const qh = 0.00256 * Kz * Kzt * 1.0 * Math.pow(V, 2); // Ke = 1.0 (default sea-level)
+      const Ke = computeKe(elev);
+      const qh = 0.00256 * Kz * Kzt * Ke * V * V;
 
-      const GCpi = 0.18; // Enclosed building, Table 26.13-1
+      // ---- 4. Internal pressure (Table 26.13-1) ----
+      const GCpi = ASCE.GCPI[encl];
 
-      // Base external pressure coefficients per Fig. 30.3-1 (wall zones)
-      // Log-interpolated from A=10 (most conservative) to A=500
-      let GCp_pos    = interpGCp(area,  1.0,  0.7);
-      let GCp_negZ4  = interpGCp(area, -1.1, -0.8);   // FIX: base is -1.1 not -1.0
-      let GCp_negZ5  = interpGCp(area, -1.4, -0.8);
+      // ---- 5. External coefficients (Fig. 30.3-1, log-interpolated) ----
+      let GCp_pos   = interpGCp(area, ASCE.GCP_WALL.pos.a10,   ASCE.GCP_WALL.pos.a500);
+      let GCp_negZ4 = interpGCp(area, ASCE.GCP_WALL.negZ4.a10, ASCE.GCP_WALL.negZ4.a500);
+      let GCp_negZ5 = interpGCp(area, ASCE.GCP_WALL.negZ5.a10, ASCE.GCP_WALL.negZ5.a500);
 
-      // 10% wall reduction per Fig. 30.3-1 footnote when roof slope theta <= 10 deg
+      // 10% wall reduction when theta <= 10 deg (Fig. 30.3-1 footnote)
       const applyThetaReduction = (theta <= 10);
       if (applyThetaReduction) {
         GCp_pos   *= 0.9;
@@ -509,90 +711,187 @@
         GCp_negZ5 *= 0.9;
       }
 
-      // ASCE 7-22 Eq. 30.3-1: p = qh * Kd * (GCp - GCpi)
+      // ---- 6. Net pressures, Eq. 30.3-1: p = qh * Kd * (GCp - GCpi) ----
       // Worst-case sign combinations:
-      //   Positive (inward):  GCpi negative   -> p = qh * Kd * (GCp_pos + |GCpi|)
-      //   Negative (suction): GCpi positive   -> p = qh * Kd * (GCp_neg - |GCpi|)
-      const pPos    = qh * Kd * (GCp_pos    - (-GCpi));   // = qh*Kd*(GCp_pos + 0.18)
-      const pNegZ4  = qh * Kd * (GCp_negZ4  - (+GCpi));   // = qh*Kd*(GCp_negZ4 - 0.18)
-      const pNegZ5  = qh * Kd * (GCp_negZ5  - (+GCpi));
+      //   Positive (inward):  internal suction     -> qh*Kd*(GCp_pos + GCpi)
+      //   Negative (suction): internal pressuriz.  -> qh*Kd*(GCp_neg - GCpi)
+      const rawPos   = qh * ASCE.KD * (GCp_pos   + GCpi);
+      const rawNegZ4 = qh * ASCE.KD * (GCp_negZ4 - GCpi);
+      const rawNegZ5 = qh * ASCE.KD * (GCp_negZ5 - GCpi);
 
-      // DOM updates -- pressures
-      document.getElementById('z4Pressures').textContent = `${pPos.toFixed(1)} / ${pNegZ4.toFixed(1)}`;
-      document.getElementById('z5Pressures').textContent = `${pPos.toFixed(1)} / ${pNegZ5.toFixed(1)}`;
-      
-      // DOM updates -- loads
-      document.getElementById('z4Loads').textContent = `${(pPos*area).toFixed(0)} / ${(pNegZ4*area).toFixed(0)}`;
-      document.getElementById('z5Loads').textContent = `${(pPos*area).toFixed(0)} / ${(pNegZ5*area).toFixed(0)}`;
+      // ---- 7. Sec. 30.2.2 minimum (strength level) ----
+      const pPos   = applyMinimum(rawPos);
+      const pNegZ4 = applyMinimum(rawNegZ4);
+      const pNegZ5 = applyMinimum(rawNegZ5);
+      const anyMinZ4 = pPos.governed || pNegZ4.governed;
+      const anyMinZ5 = pPos.governed || pNegZ5.governed;
 
-      // Print summary
+      // ---- 8. ASD (0.6W) ----
+      const asd = {
+        pos:   pPos.p   * ASCE.ASD_FACTOR,
+        negZ4: pNegZ4.p * ASCE.ASD_FACTOR,
+        negZ5: pNegZ5.p * ASCE.ASD_FACTOR
+      };
+
+      lastResults = { V, L, W, h, exp, encl, Kzt, theta, elev, area, a, Kz, Ke, qh, GCpi,
+        GCp_pos, GCp_negZ4, GCp_negZ5, applyThetaReduction,
+        pPos, pNegZ4, pNegZ5, asd };
+
+      // ---- DOM: stat strip ----
+      document.getElementById('statA').textContent  = a.toFixed(2) + ' ft';
+      document.getElementById('statKh').textContent = Kz.toFixed(3);
+      document.getElementById('statQh').textContent = qh.toFixed(1) + ' psf';
+      document.getElementById('statKe').textContent = Ke.toFixed(3);
+
+      // ---- DOM: pressures + ASD + min badges ----
+      document.getElementById('z4Pressures').textContent = `+${fmt1(pPos.p)} / ${fmt1(pNegZ4.p)}`;
+      document.getElementById('z5Pressures').textContent = `+${fmt1(pPos.p)} / ${fmt1(pNegZ5.p)}`;
+      document.getElementById('z4Asd').textContent = `ASD 0.6W: +${fmt1(asd.pos)} / ${fmt1(asd.negZ4)} psf`;
+      document.getElementById('z5Asd').textContent = `ASD 0.6W: +${fmt1(asd.pos)} / ${fmt1(asd.negZ5)} psf`;
+      document.getElementById('z4MinBadge').classList.toggle('show', anyMinZ4);
+      document.getElementById('z5MinBadge').classList.toggle('show', anyMinZ5);
+
+      // ---- DOM: loads (ultimate) ----
+      document.getElementById('z4Loads').textContent = `+${fmtLb(pPos.p * area)} / ${fmtLb(pNegZ4.p * area)}`;
+      document.getElementById('z5Loads').textContent = `+${fmtLb(pPos.p * area)} / ${fmtLb(pNegZ5.p * area)}`;
+
+      // ---- DOM: zone diagram ----
+      updateZoneDiagram(a, L);
+
+      // ---- DOM: print summary ----
       document.getElementById('printInputSummary').innerHTML = `
         <h3>Input Parameters</h3>
         <div class="summary-grid">
-          <div class="summary-item"><strong>Wind Speed (V)</strong> ${V} mph</div>
-          <div class="summary-item"><strong>Building Dims (L &times; W)</strong> ${L}ft &times; ${W}ft</div>
+          <div class="summary-item"><strong>Wind Speed (V)</strong> ${V} mph (ultimate)</div>
+          <div class="summary-item"><strong>Building Dims (L &times; W)</strong> ${L} ft &times; ${W} ft</div>
           <div class="summary-item"><strong>Mean Roof Height (h)</strong> ${h} ft</div>
           <div class="summary-item"><strong>Exposure</strong> Category ${exp}</div>
+          <div class="summary-item"><strong>Enclosure</strong> ${ENCLOSURE_LABEL[encl]} (GCpi &plusmn;${GCpi})</div>
           <div class="summary-item"><strong>Topo Factor (Kzt)</strong> ${Kzt}</div>
           <div class="summary-item"><strong>Roof Slope &theta;</strong> ${theta}&deg;</div>
-          <div class="summary-item"><strong>Effective Area</strong> ${area} sq.ft</div>
+          <div class="summary-item"><strong>Ground Elev. / Ke</strong> ${elev} ft / ${Ke.toFixed(3)}</div>
+          <div class="summary-item"><strong>Effective Area</strong> ${area} sq ft</div>
+          <div class="summary-item"><strong>End Zone Width (a)</strong> ${a.toFixed(2)} ft</div>
           <div class="summary-item"><strong>Kh @ h</strong> ${Kz.toFixed(3)}</div>
           <div class="summary-item"><strong>qh</strong> ${qh.toFixed(2)} psf</div>
         </div>
       `;
 
+      // ---- DOM: breakdown ----
       const thetaNote = applyThetaReduction
-        ? '<p><strong>Wall reduction:</strong> &theta;=' + theta + '&deg; \u2264 10&deg;, so wall GCp values are reduced by 10% per Fig. 30.3-1 footnote (applied below).</p>'
-        : '<p><strong>Wall reduction:</strong> &theta;=' + theta + '&deg; > 10&deg;, so the 10% wall GCp reduction is NOT applied.</p>';
+        ? `<p><strong>Wall reduction:</strong> &theta; = ${theta}&deg; &le; 10&deg;, wall GCp values reduced 10% per Fig. 30.3-1 footnote (applied below).</p>`
+        : `<p><strong>Wall reduction:</strong> &theta; = ${theta}&deg; &gt; 10&deg;, the 10% wall GCp reduction is NOT applied.</p>`;
 
-      // Breakdown
+      const minNote = (pPos.governed || pNegZ4.governed || pNegZ5.governed)
+        ? `<p><strong>8. Minimum pressure (Sec. 30.2.2):</strong> computed value(s) below 16 psf raised to &plusmn;16 psf (strength level). Raw values: +${rawPos.toFixed(2)} / ${rawNegZ4.toFixed(2)} / ${rawNegZ5.toFixed(2)} psf.</p>`
+        : `<p><strong>8. Minimum pressure (Sec. 30.2.2):</strong> all values exceed the 16 psf C&amp;C minimum &mdash; no adjustment needed.</p>`;
+
+      const c = ASCE.EXPOSURE[exp];
       document.getElementById('calcSteps').innerHTML = `
-        <p><strong>1. End Zone Width (a):</strong> MIN(0.1&times;least dim, 0.4h) clamped &ge; MAX(0.04&times;least dim, 3 ft) = ${a.toFixed(2)} ft</p>
-        <p><strong>2. Exposure Coeff (Kh):</strong> 2.41 &times; (max(${h}, ${EXPOSURE_CONSTANTS_722[exp].zmin}) / ${EXPOSURE_CONSTANTS_722[exp].zg})^(2/${EXPOSURE_CONSTANTS_722[exp].alpha}) = ${Kz.toFixed(3)}</p>
-        <p><strong>3. Velocity Pressure (qh):</strong> 0.00256 &times; Kh &times; Kzt(${Kzt}) &times; Ke(1.0) &times; V&sup2; = ${qh.toFixed(2)} psf <em>(ASCE 7-22 Eq. 26.10-1, Kd NOT in qh)</em></p>
-        <p><strong>4. Internal Pressure (GCpi):</strong> Enclosed Building = &plusmn;${GCpi}</p>
+        <p><strong>1. End zone width (a):</strong> MIN(0.1&times;${leastDim}, 0.4&times;${h}) clamped &ge; MAX(0.04&times;${leastDim}, 3 ft) = ${a.toFixed(2)} ft</p>
+        <p><strong>2. Exposure coeff. (Kh):</strong> 2.41 &times; (max(${h}, 15)/${c.zg})^(2/${c.alpha}) = ${Kz.toFixed(3)} <em>(Table 26.10-1; 15 ft formula floor, all exposures)</em></p>
+        <p><strong>3. Elevation factor (Ke):</strong> e^(&minus;0.0000362 &times; ${elev}) = ${Ke.toFixed(3)} <em>(Table 26.9-1)</em></p>
+        <p><strong>4. Velocity pressure (qh):</strong> 0.00256 &times; ${Kz.toFixed(3)} &times; ${Kzt} &times; ${Ke.toFixed(3)} &times; ${V}&sup2; = ${qh.toFixed(2)} psf <em>(Eq. 26.10-1 &mdash; Kd NOT in qh)</em></p>
+        <p><strong>5. Internal pressure (GCpi):</strong> ${ENCLOSURE_LABEL[encl]} = &plusmn;${GCpi} <em>(Table 26.13-1)</em></p>
         ${thetaNote}
-        <p><strong>5. Ext. Coefficients (GCp) at A=${area} sq.ft</strong>${applyThetaReduction ? ' (after 10% reduction)' : ''}:</p>
-        <p>&nbsp;&nbsp;&nbsp;Positive (All Zones): +${GCp_pos.toFixed(3)}</p>
+        <p><strong>6. Ext. coefficients (GCp) at A = ${area} sq ft</strong>${applyThetaReduction ? ' (after 10% reduction)' : ''}:</p>
+        <p>&nbsp;&nbsp;&nbsp;Positive (Zones 4 &amp; 5): +${GCp_pos.toFixed(3)}</p>
         <p>&nbsp;&nbsp;&nbsp;Negative (Zone 4): ${GCp_negZ4.toFixed(3)}</p>
         <p>&nbsp;&nbsp;&nbsp;Negative (Zone 5): ${GCp_negZ5.toFixed(3)}</p>
-        <p><strong>6. Net Pressure (ASCE 7-22 Eq. 30.3-1):</strong> p = qh &times; Kd(${Kd}) &times; (GCp &minus; GCpi)</p>
-        <p>&nbsp;&nbsp;&nbsp;Zone 4 pos: ${qh.toFixed(2)} &times; ${Kd} &times; (${GCp_pos.toFixed(3)} &minus; (&minus;${GCpi})) = ${pPos.toFixed(2)} psf</p>
-        <p>&nbsp;&nbsp;&nbsp;Zone 4 neg: ${qh.toFixed(2)} &times; ${Kd} &times; (${GCp_negZ4.toFixed(3)} &minus; ${GCpi}) = ${pNegZ4.toFixed(2)} psf</p>
-        <p>&nbsp;&nbsp;&nbsp;Zone 5 neg: ${qh.toFixed(2)} &times; ${Kd} &times; (${GCp_negZ5.toFixed(3)} &minus; ${GCpi}) = ${pNegZ5.toFixed(2)} psf</p>
+        <p><strong>7. Net pressure (Eq. 30.3-1):</strong> p = qh &times; Kd(${ASCE.KD}) &times; (GCp &minus; GCpi)</p>
+        <p>&nbsp;&nbsp;&nbsp;Positive: ${qh.toFixed(2)} &times; ${ASCE.KD} &times; (${GCp_pos.toFixed(3)} + ${GCpi}) = ${rawPos.toFixed(2)} psf</p>
+        <p>&nbsp;&nbsp;&nbsp;Zone 4 neg: ${qh.toFixed(2)} &times; ${ASCE.KD} &times; (${GCp_negZ4.toFixed(3)} &minus; ${GCpi}) = ${rawNegZ4.toFixed(2)} psf</p>
+        <p>&nbsp;&nbsp;&nbsp;Zone 5 neg: ${qh.toFixed(2)} &times; ${ASCE.KD} &times; (${GCp_negZ5.toFixed(3)} &minus; ${GCpi}) = ${rawNegZ5.toFixed(2)} psf</p>
+        ${minNote}
+        <p><strong>9. ASD conversion:</strong> 0.6 &times; ultimate <em>(Sec. 2.4.1 load combination 0.6W)</em></p>
       `;
 
       document.getElementById('resultsPanel').style.display = 'block';
     }
 
+    // Wall elevation diagram: strips scale with a/L (display clamped for legibility)
+    function updateZoneDiagram(a, L) {
+      const wallX = 60, wallW = 520;
+      let aPx = (a / L) * wallW;
+      aPx = Math.max(30, Math.min(aPx, wallW * 0.3)); // legible, never overlapping
+      const left = document.getElementById('zdLeft');
+      const right = document.getElementById('zdRight');
+      left.setAttribute('width', aPx);
+      right.setAttribute('x', wallX + wallW - aPx);
+      right.setAttribute('width', aPx);
+      document.getElementById('zdL5a').setAttribute('x', wallX + aPx / 2);
+      document.getElementById('zdL5b').setAttribute('x', wallX + wallW - aPx / 2);
+      document.getElementById('zdDimLine').setAttribute('x2', wallX + aPx);
+      document.getElementById('zdDimTick').setAttribute('x1', wallX + aPx);
+      document.getElementById('zdDimTick').setAttribute('x2', wallX + aPx);
+      document.getElementById('zdDimText').textContent = `a = ${a.toFixed(1)} ft`;
+      document.getElementById('zdCaption').textContent =
+        `An opening within ${a.toFixed(1)} ft of any building corner uses Zone 5 pressures (diagram not to scale).`;
+    }
+
     function resetApp() {
-      document.querySelectorAll('input[type="number"]').forEach(i => i.value = '');
+      document.querySelectorAll('.inputs-panel input[type="number"]').forEach(i => i.value = '');
       document.getElementById('theta').value = '5';
-      document.getElementById('exposure').value = 'C';
       document.getElementById('kzt').value = '1.0';
+      document.getElementById('elevation').value = '0';
+      document.getElementById('exposure').value = 'C';
+      document.getElementById('enclosure').value = 'enclosed';
       document.getElementById('resultsPanel').style.display = 'none';
       document.getElementById('errorMsg').style.display = 'none';
+      document.getElementById('warnMsg').style.display = 'none';
+      lastResults = null;
     }
 
     function copySummary() {
-      const z4 = document.getElementById('z4Pressures').textContent;
-      const z5 = document.getElementById('z5Pressures').textContent;
-      const V = document.getElementById('windSpeed').value;
-      const exp = document.getElementById('exposure').value;
-      const area = document.getElementById('area').value;
-      const h = document.getElementById('height').value;
-      const theta = document.getElementById('theta').value;
+      if (!lastResults) return;
+      const r = lastResults;
+      const text =
+        `OASIS ENGINEERING - ASCE 7-22 C&C WIND PRESSURES (WALL ZONES 4/5)\n` +
+        `V = ${r.V} mph (ult), Exposure ${r.exp}, ${ENCLOSURE_LABEL[r.encl]}, h = ${r.h} ft, ` +
+        `Kzt = ${r.Kzt}, theta = ${r.theta} deg, elev = ${r.elev} ft (Ke = ${r.Ke.toFixed(3)}), A = ${r.area} sq ft\n` +
+        `End zone width a = ${r.a.toFixed(2)} ft; Kh = ${r.Kz.toFixed(3)}; qh = ${r.qh.toFixed(2)} psf\n` +
+        `ULTIMATE:  Zone 4: +${fmt1(r.pPos.p)} / ${fmt1(r.pNegZ4.p)} psf   Zone 5: +${fmt1(r.pPos.p)} / ${fmt1(r.pNegZ5.p)} psf\n` +
+        `ASD 0.6W:  Zone 4: +${fmt1(r.asd.pos)} / ${fmt1(r.asd.negZ4)} psf   Zone 5: +${fmt1(r.asd.pos)} / ${fmt1(r.asd.negZ5)} psf\n` +
+        `Notes: Low-rise method (h <= 60 ft), Fig. 30.3-1; Kd = 0.85 in Eq. 30.3-1; ` +
+        `16 psf minimum per Sec. 30.2.2${(r.pPos.governed || r.pNegZ4.governed || r.pNegZ5.governed) ? ' (GOVERNS one or more values)' : ''}. Estimate only.`;
 
-      const text = `OASIS ENGINEERING - ASCE 7-22 C&C WIND PRESSURES\n` +
-                   `V = ${V} mph, Exposure ${exp}, h = ${h} ft, theta = ${theta} deg, Area = ${area} sq.ft\n` +
-                   `Zone 4: ${z4} psf (Pos / Neg)\n` +
-                   `Zone 5: ${z5} psf (Pos / Neg)\n` +
-                   `Note: Assumes enclosed low-rise building. Kd = 0.85 applied in pressure equation per ASCE 7-22 Eq. 30.3-1.`;
-      
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Summary copied to clipboard!");
-      });
+      const done = () => {
+        const btn = document.getElementById('copyBtn');
+        const old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = old; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+      } else {
+        fallbackCopy(text, done);
+      }
     }
+    function fallbackCopy(text, done) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    // Open the breakdown when printing so the PDF is a complete record
+    let breakdownWasOpen = false;
+    window.addEventListener('beforeprint', () => {
+      const d = document.getElementById('breakdownDetails');
+      breakdownWasOpen = d.open; d.open = true;
+    });
+    window.addEventListener('afterprint', () => {
+      document.getElementById('breakdownDetails').open = breakdownWasOpen;
+    });
+
+    // Wire up
+    document.getElementById('calcBtn').addEventListener('click', calculate);
+    document.getElementById('resetBtn').addEventListener('click', resetApp);
+    document.getElementById('copyBtn').addEventListener('click', copySummary);
+    document.querySelectorAll('.inputs-panel input').forEach(i => {
+      i.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+    });
   </script>
 </body>
 </html>
