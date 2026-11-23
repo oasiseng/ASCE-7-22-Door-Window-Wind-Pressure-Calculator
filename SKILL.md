@@ -46,7 +46,7 @@ Execute changes as focused edits to a single-file web app (`index.html`) plus pr
    - V=115 mph, L=100 ft, W=50 ft, h=30 ft, Exposure C, Enclosed, Kzt=1.0, θ=5°, elev=0, A=20 sf.
    - Expected: a = 5.00 ft, Kh = 0.981, qh = 33.20 psf; Zone 4 ult +29.1/−31.7 psf; Zone 5 ult +29.1/−37.9 psf; ASD = 0.6×.
 2. Confirm signs are correct for inward/outward pressure and the ASD values equal 0.6 × ultimate.
-3. Test one edge condition relevant to the change. Useful edges: h > 60 warning; Exposure B at h = 15 (Kh = 0.573); low V where the 16 psf minimum governs; partially enclosed (GCpi = 0.55); elevation 5,000 ft (Ke ≈ 0.834); A ≤ 10 and A ≥ 500 interpolation clamps.
+3. Test one edge condition relevant to the change. Useful edges: h > 60 ft switches to Fig. 30.4-1 (V = 150, 120 x 80, h = 100, Exp C, θ = 0, A = 20, z = 40: a = 8.00, qh = 72.2, Z4 +56.9 / −66.3, Z5 +56.9 / −121.5 ult); least dimension 400 ft at h = 15, θ = 5 gives a = 12.00 (0.8h limit); Exposure B at h = 15 (Kh = 0.573); low V where the 16 psf minimum governs; partially enclosed (GCpi = 0.55); elevation 5,000 ft (Ke ≈ 0.834); A ≤ 10 and A ≥ 500 interpolation clamps.
 4. If `smoke-test.js` exists, run `node smoke-test.js` — all cases must pass.
 5. If docs changed, ensure the README example, changelog, and stated assumptions still match app behavior.
 
