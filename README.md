@@ -66,11 +66,17 @@ Results:
 - **External coefficients:** Fig. 30.3-1 wall values, log-interpolated on effective wind area: positive +1.0 → +0.7, Zone 4 negative −1.1 → −0.8, Zone 5 negative −1.4 → −0.8 (A = 10 → 500 sq ft), reduced 10% when θ ≤ 10°.
 - **Internal pressure:** GCpi = ±0.18 (enclosed / partially open) or ±0.55 (partially enclosed) per Table 26.13-1, combined for worst case.
 - **Minimum pressure:** net design pressures not less than 16 psf in either direction per Section 30.2.2 (strength level); ASD values are derived after the minimum is applied.
-- **Limitations:** wall zones only (no roof zones); rigid buildings; no parapet, overhang, or rooftop equipment provisions; tornado loads (ASCE 7-22 Ch. 32) not included; h > 60 ft is outside the method (the tool warns and continues for reference only). For complex cases, use the full ASCE provisions.
+- **Limitations:** wall zones only (no roof zones); rigid buildings; no parapet, overhang, or rooftop equipment provisions; tornado loads (ASCE 7-22 Ch. 32) not included; above h = 60 ft the tool switches to Part 2 (Fig. 30.4-1) for walls. For complex cases, use the full ASCE provisions.
 
 ## Changelog
 
-### v3 (current)
+### v3.1 (current)
+- **Added:** buildings with h > 60 ft. Walls are calculated per ASCE 7-22 Chapter 30 Part 2 (Sec. 30.4, Fig. 30.4-1, Eq. 30.4-1): positive +0.9 → +0.6, Zone 4 −0.9 → −0.7, Zone 5 −1.8 → −1.0 (A = 20 → 500 sq ft). Positive pressure uses q<sub>z</sub> at the height of the opening (new optional input; blank = h), negative pressure and internal pressure use q<sub>h</sub>. No 10% low-slope reduction; a = 10% of the least horizontal dimension, not less than 3 ft.
+- **Fixed:** the over-60 ft message cited Figs. 30.5-1 / 30.6-1, which are ASCE 7-16 numbers. The 7-22 reference is Sec. 30.4 / Fig. 30.4-1.
+- **Added:** the Fig. 30.3-1 exception for zone width: with roof slope 0° to 7° and a least horizontal dimension over 300 ft, a need not exceed 0.8 h.
+- Low-rise results are unchanged.
+
+### v3
 - **Fixed:** Exposure B velocity pressure coefficient now uses the Table 26.10-1 formula floor of 15 ft for all exposures. The previous version applied a 30 ft floor in Exposure B (Kz = 0.70 instead of 0.57 at h = 15 ft), overstating pressures by up to ~20% for short suburban buildings; the 0.70 value belongs to the Chapter 28 envelope MWFRS procedure only.
 - **Added:** 16 psf minimum net pressure check per Section 30.2.2, with a "min governs" indicator.
 - **Added:** Enclosure classification (enclosed / partially open / partially enclosed) — GCpi ±0.18 or ±0.55.

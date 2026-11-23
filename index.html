@@ -374,8 +374,13 @@
           </div>
 
           <div class="input-group">
-            <label for="height">Mean Roof Height, h (ft) <span class="help-icon" tabindex="0" data-tooltip="Average of eave and ridge heights (eave height for slopes ≤ 10°). Must be ≤ 60 ft for the low-rise method.">?</span></label>
+            <label for="height">Mean Roof Height, h (ft) <span class="help-icon" tabindex="0" data-tooltip="Average of eave and ridge heights (eave height for slopes ≤ 10°). Up to 60 ft the low-rise method (Fig. 30.3-1) is used; above 60 ft, Fig. 30.4-1.">?</span></label>
             <input type="number" id="height" inputmode="decimal" min="0" placeholder="e.g. 15">
+          </div>
+
+          <div class="input-group">
+            <label for="zOpening">Height of Opening Above Grade, z (ft) <span class="help-icon" tabindex="0" data-tooltip="Only used when h > 60 ft: positive pressure is taken at the height of the door or window (top of the opening). Leave blank to use h, which is conservative.">?</span></label>
+            <input type="number" id="zOpening" inputmode="decimal" min="0" placeholder="only for h > 60 ft">
           </div>
 
           <div class="input-group">
@@ -516,7 +521,7 @@
           <p class="footnote">Positive pressures act inward, negative outward (suction). Ultimate values include the 16 psf minimum of ASCE 7-22 Sec. 30.2.2 where it governs. ASD = 0.6 &times; ultimate.</p>
 
           <div class="print-only-disclaimer">
-            <p><strong>Basis:</strong> ASCE 7-22 Ch. 30 Part 1 (Fig. 30.3-1, wall Zones 4/5), Eq. 26.10-1 and 30.3-1, Kd = 0.85, log-interpolated GCp, 16 psf minimum per Sec. 30.2.2. Estimate only &mdash; not a sealed engineering document. Verify all designs with a licensed professional engineer. Oasis Engineering assumes no liability for use of this tool. www.oasisengineering.com</p>
+            <p><strong>Basis:</strong> ASCE 7-22 Ch. 30, wall Zones 4/5: Part 1 (Fig. 30.3-1, Eq. 30.3-1) for h &le; 60 ft, Part 2 (Fig. 30.4-1, Eq. 30.4-1) for h &gt; 60 ft; Eq. 26.10-1, Kd = 0.85, log-interpolated GCp, 16 psf minimum per Sec. 30.2.2. Estimate only &mdash; not a sealed engineering document. Verify all designs with a licensed professional engineer. Oasis Engineering assumes no liability for use of this tool. www.oasisengineering.com</p>
           </div>
         </section>
       </main>
@@ -593,6 +598,12 @@
         pos:   { a10:  1.0, a500:  0.7 },   // Zones 4 & 5 positive
         negZ4: { a10: -1.1, a500: -0.8 },
         negZ5: { a10: -1.4, a500: -0.8 }
+      },
+      // Fig. 30.4-1 wall GCp endpoints for h > 60 ft (A = 20 sf and A = 500 sf); no roof-slope reduction
+      GCP_WALL_HIGH: {
+        pos:   { a20:  0.9, a500:  0.6 },
+        negZ4: { a20: -0.9, a500: -0.7 },
+        negZ5: { a20: -1.8, a500: -1.0 }
       }
     };
 
@@ -615,11 +626,13 @@
     }
 
     // Log-interpolation per Fig. 30.3-1 between A=10 and A=500 sq ft
-    function interpGCp(area, val10, val500) {
-      if (area <= 10) return val10;
+    // (Fig. 30.4-1 for h > 60 ft starts its slope at A = 20 sq ft: pass aLo = 20)
+    function interpGCp(area, val10, val500, aLo) {
+      aLo = aLo || 10;
+      if (area <= aLo) return val10;
       if (area >= 500) return val500;
-      const logA = Math.log10(area);
-      return val10 + (val500 - val10) * ((logA - 1) / (Math.log10(500) - 1));
+      const lo = Math.log10(aLo);
+      return val10 + (val500 - val10) * ((Math.log10(area) - lo) / (Math.log10(500) - lo));
     }
 
     // Sec. 30.2.2: net C&C design pressure not less than 16 psf either direction
@@ -651,6 +664,9 @@
       const elevRaw = document.getElementById('elevation').value;
       const elev  = elevRaw === '' ? 0 : parseFloat(elevRaw);
       const area  = parseFloat(document.getElementById('area').value);
+      const zRaw  = document.getElementById('zOpening').value;
+      const high  = h > 60;                       // Chapter 30 Part 2 (Sec. 30.4) instead of Part 1
+      const zOpen = (zRaw === '' || isNaN(parseFloat(zRaw))) ? h : Math.min(parseFloat(zRaw), h);
 
       // ---- Validation (blocking) ----
       if ([V, L, W, h, Kzt, area].some(isNaN) || V <= 0 || L <= 0 || W <= 0 || h <= 0 || area <= 0) {
@@ -676,7 +692,12 @@
 
       // ---- Warnings (non-blocking) ----
       const warnings = [];
-      if (h > 60) warnings.push("Mean roof height > 60 ft: the low-rise C&amp;C method (Fig. 30.3-1) does not apply. Results shown for reference only — use ASCE 7-22 Figs. 30.5-1 / 30.6-1.");
+      if (zRaw !== '' && parseFloat(zRaw) <= 0) {
+        err.textContent = "Height of the opening above grade must be greater than 0.";
+        err.style.display = 'block';
+        return;
+      }
+      if (high) warnings.push("Mean roof height &gt; 60 ft: walls are calculated by ASCE 7-22 Chapter 30 Part 2 (Sec. 30.4, Fig. 30.4-1, Eq. 30.4-1). Positive pressure uses q<sub>z</sub> at the height of the opening (" + zOpen + " ft" + (zRaw === '' ? ", taken as h because no height was entered" : "") + "); negative pressure uses q<sub>h</sub>. The 10% low-slope reduction does not apply.");
       if (V < 85 || V > 250) warnings.push("Wind speed is outside the typical ASCE 7-22 map range (85–250 mph). Verify V is the ultimate (strength-level) speed.");
       if (Kzt > 2) warnings.push("Kzt > 2.0 is unusual. Verify the topographic computation per Fig. 26.8-1.");
       if (warnings.length) {
@@ -689,22 +710,30 @@
       const leastDim = Math.min(L, W);
       let a = Math.min(0.1 * leastDim, 0.4 * h);
       a = Math.max(a, 0.04 * leastDim, 3);
+      // Exception: roof slope 0 to 7 deg and least horizontal dimension > 300 ft, a need not exceed 0.8h
+      const aCapped = (!high && theta <= 7 && leastDim > 300 && a > Math.max(0.8 * h, 3));
+      if (aCapped) a = Math.max(0.8 * h, 3);
+      // h > 60 ft (Fig. 30.4-1): a = 10% of the least horizontal dimension, not less than 3 ft
+      if (high) a = Math.max(0.1 * leastDim, 3);
 
       // ---- 2-3. Kh, Ke, qh (Eq. 26.10-1 — Kd is NOT in qh in ASCE 7-22) ----
       const Kz = computeKz(exp, h);
       const Ke = computeKe(elev);
       const qh = 0.00256 * Kz * Kzt * Ke * V * V;
+      const KzOpen = computeKz(exp, zOpen);
+      const qzOpen = 0.00256 * KzOpen * Kzt * Ke * V * V;   // used for positive pressure when h > 60 ft
 
       // ---- 4. Internal pressure (Table 26.13-1) ----
       const GCpi = ASCE.GCPI[encl];
 
       // ---- 5. External coefficients (Fig. 30.3-1, log-interpolated) ----
-      let GCp_pos   = interpGCp(area, ASCE.GCP_WALL.pos.a10,   ASCE.GCP_WALL.pos.a500);
-      let GCp_negZ4 = interpGCp(area, ASCE.GCP_WALL.negZ4.a10, ASCE.GCP_WALL.negZ4.a500);
-      let GCp_negZ5 = interpGCp(area, ASCE.GCP_WALL.negZ5.a10, ASCE.GCP_WALL.negZ5.a500);
+      const HW = ASCE.GCP_WALL_HIGH;
+      let GCp_pos   = high ? interpGCp(area, HW.pos.a20,   HW.pos.a500,   20) : interpGCp(area, ASCE.GCP_WALL.pos.a10,   ASCE.GCP_WALL.pos.a500);
+      let GCp_negZ4 = high ? interpGCp(area, HW.negZ4.a20, HW.negZ4.a500, 20) : interpGCp(area, ASCE.GCP_WALL.negZ4.a10, ASCE.GCP_WALL.negZ4.a500);
+      let GCp_negZ5 = high ? interpGCp(area, HW.negZ5.a20, HW.negZ5.a500, 20) : interpGCp(area, ASCE.GCP_WALL.negZ5.a10, ASCE.GCP_WALL.negZ5.a500);
 
       // 10% wall reduction when theta <= 10 deg (Fig. 30.3-1 footnote)
-      const applyThetaReduction = (theta <= 10);
+      const applyThetaReduction = (!high && theta <= 10);
       if (applyThetaReduction) {
         GCp_pos   *= 0.9;
         GCp_negZ4 *= 0.9;
@@ -715,7 +744,8 @@
       // Worst-case sign combinations:
       //   Positive (inward):  internal suction     -> qh*Kd*(GCp_pos + GCpi)
       //   Negative (suction): internal pressuriz.  -> qh*Kd*(GCp_neg - GCpi)
-      const rawPos   = qh * ASCE.KD * (GCp_pos   + GCpi);
+      // h > 60 ft, Eq. 30.4-1: p = q Kd (GCp) - qi Kd (GCpi), q = qz for positive pressure, qh for negative; qi = qh
+      const rawPos   = high ? ASCE.KD * (qzOpen * GCp_pos + qh * GCpi) : qh * ASCE.KD * (GCp_pos   + GCpi);
       const rawNegZ4 = qh * ASCE.KD * (GCp_negZ4 - GCpi);
       const rawNegZ5 = qh * ASCE.KD * (GCp_negZ5 - GCpi);
 
@@ -733,7 +763,7 @@
         negZ5: pNegZ5.p * ASCE.ASD_FACTOR
       };
 
-      lastResults = { V, L, W, h, exp, encl, Kzt, theta, elev, area, a, Kz, Ke, qh, GCpi,
+      lastResults = { high, zOpen, qzOpen, V, L, W, h, exp, encl, Kzt, theta, elev, area, a, Kz, Ke, qh, GCpi,
         GCp_pos, GCp_negZ4, GCp_negZ5, applyThetaReduction,
         pPos, pNegZ4, pNegZ5, asd };
 
@@ -778,7 +808,10 @@
       `;
 
       // ---- DOM: breakdown ----
-      const thetaNote = applyThetaReduction
+      const FIG = high ? 'Fig. 30.4-1' : 'Fig. 30.3-1', EQ = high ? 'Eq. 30.4-1' : 'Eq. 30.3-1';
+      const thetaNote = high
+        ? `<p><strong>Wall reduction:</strong> h &gt; 60 ft, Fig. 30.4-1 has no low-slope reduction.</p>`
+        : applyThetaReduction
         ? `<p><strong>Wall reduction:</strong> &theta; = ${theta}&deg; &le; 10&deg;, wall GCp values reduced 10% per Fig. 30.3-1 footnote (applied below).</p>`
         : `<p><strong>Wall reduction:</strong> &theta; = ${theta}&deg; &gt; 10&deg;, the 10% wall GCp reduction is NOT applied.</p>`;
 
@@ -788,18 +821,18 @@
 
       const c = ASCE.EXPOSURE[exp];
       document.getElementById('calcSteps').innerHTML = `
-        <p><strong>1. End zone width (a):</strong> MIN(0.1&times;${leastDim}, 0.4&times;${h}) clamped &ge; MAX(0.04&times;${leastDim}, 3 ft) = ${a.toFixed(2)} ft</p>
+        <p><strong>1. End zone width (a):</strong> ${high ? `MAX(0.1&times;${leastDim}, 3 ft) = ${a.toFixed(2)} ft <em>(Fig. 30.4-1, h &gt; 60 ft)</em>` : `MIN(0.1&times;${leastDim}, 0.4&times;${h}) clamped &ge; MAX(0.04&times;${leastDim}, 3 ft)${aCapped ? `, limited to 0.8h (&theta; &le; 7&deg;, least dimension &gt; 300 ft)` : ''} = ${a.toFixed(2)} ft`}</p>
         <p><strong>2. Exposure coeff. (Kh):</strong> 2.41 &times; (max(${h}, 15)/${c.zg})^(2/${c.alpha}) = ${Kz.toFixed(3)} <em>(Table 26.10-1; 15 ft formula floor, all exposures)</em></p>
         <p><strong>3. Elevation factor (Ke):</strong> e^(&minus;0.0000362 &times; ${elev}) = ${Ke.toFixed(3)} <em>(Table 26.9-1)</em></p>
         <p><strong>4. Velocity pressure (qh):</strong> 0.00256 &times; ${Kz.toFixed(3)} &times; ${Kzt} &times; ${Ke.toFixed(3)} &times; ${V}&sup2; = ${qh.toFixed(2)} psf <em>(Eq. 26.10-1 &mdash; Kd NOT in qh)</em></p>
         <p><strong>5. Internal pressure (GCpi):</strong> ${ENCLOSURE_LABEL[encl]} = &plusmn;${GCpi} <em>(Table 26.13-1)</em></p>
         ${thetaNote}
-        <p><strong>6. Ext. coefficients (GCp) at A = ${area} sq ft</strong>${applyThetaReduction ? ' (after 10% reduction)' : ''}:</p>
+        <p><strong>6. Ext. coefficients (GCp, ${FIG}) at A = ${area} sq ft</strong>${applyThetaReduction ? ' (after 10% reduction)' : ''}:</p>
         <p>&nbsp;&nbsp;&nbsp;Positive (Zones 4 &amp; 5): +${GCp_pos.toFixed(3)}</p>
         <p>&nbsp;&nbsp;&nbsp;Negative (Zone 4): ${GCp_negZ4.toFixed(3)}</p>
         <p>&nbsp;&nbsp;&nbsp;Negative (Zone 5): ${GCp_negZ5.toFixed(3)}</p>
-        <p><strong>7. Net pressure (Eq. 30.3-1):</strong> p = qh &times; Kd(${ASCE.KD}) &times; (GCp &minus; GCpi)</p>
-        <p>&nbsp;&nbsp;&nbsp;Positive: ${qh.toFixed(2)} &times; ${ASCE.KD} &times; (${GCp_pos.toFixed(3)} + ${GCpi}) = ${rawPos.toFixed(2)} psf</p>
+        <p><strong>7. Net pressure (${EQ}):</strong> ${high ? `p = q &times; Kd(${ASCE.KD}) &times; GCp &minus; qh &times; Kd &times; GCpi, with q = qz at z = ${zOpen} ft for positive pressure (Kz = ${KzOpen.toFixed(3)}, qz = ${qzOpen.toFixed(2)} psf) and q = qh for negative` : `p = qh &times; Kd(${ASCE.KD}) &times; (GCp &minus; GCpi)`}</p>
+        <p>&nbsp;&nbsp;&nbsp;Positive: ${high ? `${ASCE.KD} &times; (${qzOpen.toFixed(2)} &times; ${GCp_pos.toFixed(3)} + ${qh.toFixed(2)} &times; ${GCpi})` : `${qh.toFixed(2)} &times; ${ASCE.KD} &times; (${GCp_pos.toFixed(3)} + ${GCpi})`} = ${rawPos.toFixed(2)} psf</p>
         <p>&nbsp;&nbsp;&nbsp;Zone 4 neg: ${qh.toFixed(2)} &times; ${ASCE.KD} &times; (${GCp_negZ4.toFixed(3)} &minus; ${GCpi}) = ${rawNegZ4.toFixed(2)} psf</p>
         <p>&nbsp;&nbsp;&nbsp;Zone 5 neg: ${qh.toFixed(2)} &times; ${ASCE.KD} &times; (${GCp_negZ5.toFixed(3)} &minus; ${GCpi}) = ${rawNegZ5.toFixed(2)} psf</p>
         ${minNote}
@@ -852,7 +885,7 @@
         `End zone width a = ${r.a.toFixed(2)} ft; Kh = ${r.Kz.toFixed(3)}; qh = ${r.qh.toFixed(2)} psf\n` +
         `ULTIMATE:  Zone 4: +${fmt1(r.pPos.p)} / ${fmt1(r.pNegZ4.p)} psf   Zone 5: +${fmt1(r.pPos.p)} / ${fmt1(r.pNegZ5.p)} psf\n` +
         `ASD 0.6W:  Zone 4: +${fmt1(r.asd.pos)} / ${fmt1(r.asd.negZ4)} psf   Zone 5: +${fmt1(r.asd.pos)} / ${fmt1(r.asd.negZ5)} psf\n` +
-        `Notes: Low-rise method (h <= 60 ft), Fig. 30.3-1; Kd = 0.85 in Eq. 30.3-1; ` +
+        `Notes: ${lastResults.high ? 'h > 60 ft, Fig. 30.4-1, Eq. 30.4-1 (positive at z = ' + lastResults.zOpen + ' ft)' : 'Low-rise method (h <= 60 ft), Fig. 30.3-1'}; Kd = 0.85 in the pressure equation; ` +
         `16 psf minimum per Sec. 30.2.2${(r.pPos.governed || r.pNegZ4.governed || r.pNegZ5.governed) ? ' (GOVERNS one or more values)' : ''}. Estimate only.`;
 
       const done = () => {
